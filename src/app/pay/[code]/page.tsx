@@ -249,21 +249,35 @@ function CheckoutContent() {
     setCreatingUser(false);
   }, [authenticated, creatingUser, userCreated, email, citizenship, legalResidence, getAccessToken]);
 
-  // Step 1: Submit details → send OTP to email (or login if account exists)
+  // Step 1: Submit details → check if email exists → send OTP or login modal
   const handleFiatDetails = async () => {
     if (!email || !selectedCountry || !citizenship || !legalResidence) return;
     setError(null);
+
+    // Check if email already has a Yasmin account
+    let emailExists = false;
     try {
-      await sendCode({ email });
-      setStep("fiat-otp");
+      const res = await axios.get(
+        `${API_URL}/users/availability?email=${encodeURIComponent(email)}`
+      );
+      const data = res.data?.data || res.data;
+      emailExists = data?.isAvailable === false;
     } catch {
-      // User already has a Privy account — open login modal
-      // The login modal will handle OTP verification internally
-      login({
-        loginMethods: ["email"],
-      });
-      // authenticated will flip when user completes login in modal
-      // useEffect will then trigger handleCreateUser
+      // Can't check — try sendCode anyway
+    }
+
+    if (emailExists) {
+      // Existing user → Privy login modal (handles its own OTP)
+      login({ loginMethods: ["email"] });
+    } else {
+      // New user → inline OTP flow
+      try {
+        await sendCode({ email });
+        setStep("fiat-otp");
+      } catch {
+        // Fallback to login modal if sendCode fails for any reason
+        login({ loginMethods: ["email"] });
+      }
     }
   };
 

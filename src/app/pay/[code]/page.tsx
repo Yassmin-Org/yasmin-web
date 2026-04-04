@@ -188,6 +188,11 @@ function CheckoutContent() {
 
     try {
       const token = await getAccessToken();
+      if (!token) {
+        setError("Authentication failed. Please try again.");
+        setCreatingUser(false);
+        return;
+      }
       const headers = { Authorization: `Bearer ${token}` };
 
       // Step 1: Create user (skip if already exists)
@@ -250,11 +255,18 @@ function CheckoutContent() {
     setCreatingUser(false);
   }, [authenticated, creatingUser, userCreated, email, citizenship, legalResidence, getAccessToken]);
 
-  // Step 1: Submit details → check if email exists → send OTP or login modal
+  // Step 1: Submit details → check auth state → send OTP or login
   const handleFiatDetails = async () => {
     if (!email || !selectedCountry || !citizenship || !legalResidence) return;
     setError(null);
     setSendingCode(true);
+
+    // If already authenticated with Privy, skip email verification
+    if (authenticated) {
+      setSendingCode(false);
+      await handleCreateUser();
+      return;
+    }
 
     try {
       // Check if email already has a Yasmin account
@@ -270,7 +282,7 @@ function CheckoutContent() {
       }
 
       if (emailExists) {
-        // Existing user → Privy login modal (handles its own OTP)
+        // Existing user → Privy login modal
         setSendingCode(false);
         login({ loginMethods: ["email"] });
       } else {
@@ -281,7 +293,6 @@ function CheckoutContent() {
           setStep("fiat-otp");
         } catch (err: unknown) {
           setSendingCode(false);
-          // If sendCode fails, try login modal as fallback
           const msg = err instanceof Error ? err.message : "";
           if (msg.includes("already") || msg.includes("linked")) {
             login({ loginMethods: ["email"] });
@@ -302,7 +313,7 @@ function CheckoutContent() {
     setError(null);
     try {
       await loginWithCode({ code: otpCode });
-      // authenticated will flip to true, triggering the useEffect below
+      // authenticated flips → useEffect below triggers handleCreateUser
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Invalid code. Please try again.";
       setError(msg);
@@ -310,7 +321,7 @@ function CheckoutContent() {
     }
   };
 
-  // After OTP verified or login completed → create user + move to KYC
+  // After auth completes (OTP or login modal) → create user + move to KYC
   useEffect(() => {
     if (
       (step === "fiat-otp" || step === "fiat-details") &&
@@ -322,7 +333,7 @@ function CheckoutContent() {
       handleCreateUser();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authenticated, userCreated]);
+  }, [step, ready, authenticated, userCreated]);
 
   // Handle deposit creation after KYC
   const handleCreateDeposit = async () => {
@@ -335,6 +346,10 @@ function CheckoutContent() {
 
     try {
       const token = await getAccessToken();
+      if (!token) {
+        setError("Authentication expired. Please go back and verify again.");
+        return;
+      }
       const headers = { Authorization: `Bearer ${token}` };
 
       // Check Walapay countries first
@@ -500,7 +515,7 @@ function CheckoutContent() {
               if (step === "crypto" || step === "fiat-details")
                 setStep("landing");
               else if (step === "fiat-otp") setStep("fiat-details");
-              else if (step === "fiat-kyc") setStep("fiat-otp");
+              else if (step === "fiat-kyc") setStep("landing");
             }}
             className="rounded-lg p-1 hover:bg-gray-100"
           >
@@ -834,11 +849,12 @@ function CheckoutContent() {
             <button
               className="w-full text-center text-sm text-green-600 hover:text-green-700"
               onClick={async () => {
+                if (authenticated) return; // Already logged in
                 setError(null);
                 try {
                   await sendCode({ email });
                 } catch {
-                  setError("Failed to resend code");
+                  setError("Failed to resend code. Please go back and try again.");
                 }
               }}
             >

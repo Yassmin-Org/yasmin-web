@@ -56,7 +56,7 @@ interface PaymentLinkData {
 function CheckoutContent() {
   const params = useParams();
   const code = typeof params.code === "string" ? params.code : "";
-  const { authenticated, ready, getAccessToken } = usePrivy();
+  const { login, authenticated, ready, getAccessToken } = usePrivy();
   const { sendCode, loginWithCode, state: emailLoginState } = useLoginWithEmail();
 
   const [step, setStep] = useState<CheckoutStep>("landing");
@@ -249,17 +249,24 @@ function CheckoutContent() {
     setCreatingUser(false);
   }, [authenticated, creatingUser, userCreated, email, citizenship, legalResidence, getAccessToken]);
 
-  // Step 1: Submit details → send OTP to email
+  // Step 1: Submit details → send OTP to email (or login if account exists)
   const handleFiatDetails = async () => {
     if (!email || !selectedCountry || !citizenship || !legalResidence) return;
     setError(null);
     try {
       await sendCode({ email });
       setStep("fiat-otp");
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Failed to send verification code"
-      );
+    } catch {
+      // User already has a Privy account — use login modal with prefill
+      try {
+        await login({
+          loginMethods: ["email"],
+          prefill: { type: "email", value: email },
+        });
+        // After login, authenticated flips → useEffect creates user / moves to KYC
+      } catch {
+        setError("Failed to verify email. Please try again.");
+      }
     }
   };
 
@@ -277,10 +284,10 @@ function CheckoutContent() {
     }
   };
 
-  // After OTP verified → create user + move to KYC
+  // After OTP verified or login completed → create user + move to KYC
   useEffect(() => {
     if (
-      step === "fiat-otp" &&
+      (step === "fiat-otp" || step === "fiat-details") &&
       ready &&
       authenticated &&
       !creatingUser &&

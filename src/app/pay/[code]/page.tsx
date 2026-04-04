@@ -257,16 +257,13 @@ function CheckoutContent() {
       await sendCode({ email });
       setStep("fiat-otp");
     } catch {
-      // User already has a Privy account — use login modal with prefill
-      try {
-        await login({
-          loginMethods: ["email"],
-          prefill: { type: "email", value: email },
-        });
-        // After login, authenticated flips → useEffect creates user / moves to KYC
-      } catch {
-        setError("Failed to verify email. Please try again.");
-      }
+      // User already has a Privy account — open login modal
+      // The login modal will handle OTP verification internally
+      login({
+        loginMethods: ["email"],
+      });
+      // authenticated will flip when user completes login in modal
+      // useEffect will then trigger handleCreateUser
     }
   };
 

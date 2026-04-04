@@ -56,7 +56,7 @@ interface PaymentLinkData {
 function CheckoutContent() {
   const params = useParams();
   const code = typeof params.code === "string" ? params.code : "";
-  const { login, authenticated, ready, getAccessToken } = usePrivy();
+  const { login, authenticated, ready, getAccessToken, logout } = usePrivy();
   const { sendCode, loginWithCode, state: emailLoginState } = useLoginWithEmail();
 
   const [step, setStep] = useState<CheckoutStep>("landing");
@@ -255,55 +255,28 @@ function CheckoutContent() {
     setCreatingUser(false);
   }, [authenticated, creatingUser, userCreated, email, citizenship, legalResidence, getAccessToken]);
 
-  // Step 1: Submit details → check auth state → send OTP or login
+  // Step 1: Submit details → always verify email with OTP
   const handleFiatDetails = async () => {
     if (!email || !selectedCountry || !citizenship || !legalResidence) return;
     setError(null);
     setSendingCode(true);
 
-    // If already authenticated with Privy, skip email verification
-    if (authenticated) {
-      setSendingCode(false);
-      await handleCreateUser();
-      return;
-    }
-
     try {
-      // Check if email already has a Yasmin account
-      let emailExists = false;
-      try {
-        const res = await axios.get(
-          `${API_URL}/users/availability?email=${encodeURIComponent(email)}`
-        );
-        const data = res.data?.data || res.data;
-        emailExists = data?.isAvailable === false;
-      } catch {
-        // Can't check — try sendCode anyway
+      // If already authenticated with a stale session, log out first
+      // so sendCode works fresh for the email the user entered
+      if (authenticated) {
+        await logout();
+        // Wait a tick for Privy to clear state
+        await new Promise((r) => setTimeout(r, 500));
       }
 
-      if (emailExists) {
-        // Existing user → Privy login modal
-        setSendingCode(false);
-        login({ loginMethods: ["email"] });
-      } else {
-        // New user → inline OTP flow
-        try {
-          await sendCode({ email });
-          setSendingCode(false);
-          setStep("fiat-otp");
-        } catch (err: unknown) {
-          setSendingCode(false);
-          const msg = err instanceof Error ? err.message : "";
-          if (msg.includes("already") || msg.includes("linked")) {
-            login({ loginMethods: ["email"] });
-          } else {
-            setError(msg || "Failed to send verification code. Please try again.");
-          }
-        }
-      }
+      await sendCode({ email });
+      setSendingCode(false);
+      setStep("fiat-otp");
     } catch (err: unknown) {
       setSendingCode(false);
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      const msg = err instanceof Error ? err.message : "";
+      setError(msg || "Failed to send verification code. Please try again.");
     }
   };
 
@@ -321,10 +294,10 @@ function CheckoutContent() {
     }
   };
 
-  // After auth completes (OTP or login modal) → create user + move to KYC
+  // After OTP verified → create user + move to KYC
   useEffect(() => {
     if (
-      (step === "fiat-otp" || step === "fiat-details") &&
+      step === "fiat-otp" &&
       ready &&
       authenticated &&
       !creatingUser &&

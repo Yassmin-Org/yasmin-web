@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { PrivyProvider, usePrivy } from "@privy-io/react-auth";
+import { PrivyProvider, usePrivy, useLoginWithEmail } from "@privy-io/react-auth";
 import { Provider } from "react-redux";
 import { store } from "@/lib/api/store";
 import { setGetAccessToken } from "@/lib/api/http-service";
@@ -35,6 +35,7 @@ type CheckoutStep =
   | "crypto"
   | "crypto-success"
   | "fiat-details"
+  | "fiat-otp"
   | "fiat-kyc"
   | "fiat-deposit"
   | "success";
@@ -55,7 +56,8 @@ interface PaymentLinkData {
 function CheckoutContent() {
   const params = useParams();
   const code = typeof params.code === "string" ? params.code : "";
-  const { login, authenticated, ready, getAccessToken } = usePrivy();
+  const { authenticated, ready, getAccessToken } = usePrivy();
+  const { sendCode, loginWithCode, state: emailLoginState } = useLoginWithEmail();
 
   const [step, setStep] = useState<CheckoutStep>("landing");
   const [linkData, setLinkData] = useState<PaymentLinkData | null>(null);
@@ -69,7 +71,7 @@ function CheckoutContent() {
   const [legalResidence, setLegalResidence] = useState("");
   const [creatingUser, setCreatingUser] = useState(false);
   const [userCreated, setUserCreated] = useState(false);
-  const [loggingIn, setLoggingIn] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
 
   // KYC state
   const [kycUrl, setKycUrl] = useState<string | null>(null);
@@ -152,7 +154,6 @@ function CheckoutContent() {
   useEffect(() => {
     if (ready && authenticated) {
       setGetAccessToken(getAccessToken);
-      setLoggingIn(false);
     }
   }, [ready, authenticated, getAccessToken]);
 
@@ -248,46 +249,44 @@ function CheckoutContent() {
     setCreatingUser(false);
   }, [authenticated, creatingUser, userCreated, email, citizenship, legalResidence, getAccessToken]);
 
-  // Handle fiat details — step 1: validate form, step 2: Privy login, step 3: create user
+  // Step 1: Submit details → send OTP to email
   const handleFiatDetails = async () => {
     if (!email || !selectedCountry || !citizenship || !legalResidence) return;
-
-    if (!authenticated) {
-      // Open Privy OTP modal — user verifies email
-      setLoggingIn(true);
-      try {
-        await login({ loginMethods: ["email"] });
-        // After login completes, authenticated will be true
-        // but we need to wait for the token to be ready
-      } catch {
-        setLoggingIn(false);
-        return;
-      }
-      setLoggingIn(false);
-      // Don't proceed here — the useEffect below will handle it
-      return;
+    setError(null);
+    try {
+      await sendCode({ email });
+      setStep("fiat-otp");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Failed to send verification code"
+      );
     }
-
-    // Already authenticated — create user directly
-    await handleCreateUser();
   };
 
-  // After Privy auth completes, auto-create user (runs once)
+  // Step 2: Verify OTP code → creates Privy account + wallet
+  const handleVerifyOtp = async () => {
+    if (!otpCode || otpCode.length < 4) return;
+    setError(null);
+    try {
+      await loginWithCode({ code: otpCode });
+      // authenticated will flip to true, triggering the useEffect below
+    } catch {
+      setError("Invalid code. Please try again.");
+      setOtpCode("");
+    }
+  };
+
+  // After OTP verified → create user + move to KYC
   useEffect(() => {
     if (
-      step === "fiat-details" &&
+      step === "fiat-otp" &&
       ready &&
       authenticated &&
       !creatingUser &&
-      !userCreated &&
-      email &&
-      selectedCountry &&
-      citizenship &&
-      legalResidence
+      !userCreated
     ) {
       handleCreateUser();
     }
-    // Only re-run when authenticated or userCreated changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated, userCreated]);
 
@@ -466,7 +465,8 @@ function CheckoutContent() {
               setError(null);
               if (step === "crypto" || step === "fiat-details")
                 setStep("landing");
-              else if (step === "fiat-kyc") setStep("fiat-details");
+              else if (step === "fiat-otp") setStep("fiat-details");
+              else if (step === "fiat-kyc") setStep("fiat-otp");
             }}
             className="rounded-lg p-1 hover:bg-gray-100"
           >
@@ -634,7 +634,7 @@ function CheckoutContent() {
         {/* FIAT: DETAILS */}
         {step === "fiat-details" && (
           <div className="space-y-4">
-            <CheckoutProgress currentStep={1} totalSteps={4} />
+            <CheckoutProgress currentStep={1} totalSteps={5} />
             <h2 className="text-lg font-semibold text-gray-900">
               Your Details
             </h2>
@@ -707,18 +707,62 @@ function CheckoutContent() {
               disabled={
                 !email || !selectedCountry || !citizenship || !legalResidence
               }
-              loading={creatingUser || loggingIn}
+              loading={emailLoginState?.status === "sending-code"}
               onClick={handleFiatDetails}
             >
-              {loggingIn ? "Verifying email..." : "Continue"}
+              Continue
             </Button>
+          </div>
+        )}
+
+        {/* FIAT: OTP VERIFICATION */}
+        {step === "fiat-otp" && (
+          <div className="space-y-4">
+            <CheckoutProgress currentStep={2} totalSteps={5} />
+            <h2 className="text-lg font-semibold text-gray-900">
+              Verify Your Email
+            </h2>
+            <p className="text-sm text-gray-500">
+              We sent a code to <span className="font-medium text-gray-700">{email}</span>
+            </p>
+
+            <Input
+              label="Verification Code"
+              placeholder="Enter code"
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value)}
+              autoFocus
+            />
+
+            <Button
+              size="lg"
+              className="w-full"
+              disabled={!otpCode || otpCode.length < 4}
+              loading={emailLoginState?.status === "submitting-code" || creatingUser}
+              onClick={handleVerifyOtp}
+            >
+              {creatingUser ? "Creating account..." : "Verify"}
+            </Button>
+
+            <button
+              className="w-full text-center text-sm text-green-600 hover:text-green-700"
+              onClick={async () => {
+                try {
+                  await sendCode({ email });
+                } catch {
+                  // ignore
+                }
+              }}
+            >
+              Resend code
+            </button>
           </div>
         )}
 
         {/* FIAT: KYC */}
         {step === "fiat-kyc" && (
           <div className="space-y-4">
-            <CheckoutProgress currentStep={2} totalSteps={4} />
+            <CheckoutProgress currentStep={3} totalSteps={5} />
             <h2 className="text-lg font-semibold text-gray-900">
               Verify Your Identity
             </h2>
@@ -753,7 +797,7 @@ function CheckoutContent() {
         {/* FIAT: DEPOSIT DETAILS */}
         {step === "fiat-deposit" && (
           <div className="space-y-4">
-            <CheckoutProgress currentStep={3} totalSteps={4} />
+            <CheckoutProgress currentStep={4} totalSteps={5} />
             <h2 className="text-lg font-semibold text-gray-900">
               Complete Payment
             </h2>
@@ -814,7 +858,7 @@ function CheckoutContent() {
         {/* SUCCESS */}
         {step === "success" && (
           <div className="space-y-4 text-center">
-            <CheckoutProgress currentStep={4} totalSteps={4} />
+            <CheckoutProgress currentStep={5} totalSteps={5} />
 
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
               <Check className="h-7 w-7 text-green-600" />

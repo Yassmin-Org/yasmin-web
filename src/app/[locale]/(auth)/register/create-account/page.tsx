@@ -40,10 +40,10 @@ export default function CreateAccountPage() {
 
         const result = await createUser({
           username,
+          isAgent: false,
           citizenship,
           legalResidence,
-          locationStatus,
-          preferredLanguage: language,
+          preferredLanguage: (language === "ar" ? "ar" : "en") as "en" | "ar",
         }).unwrap();
 
         // Set the real user in auth context

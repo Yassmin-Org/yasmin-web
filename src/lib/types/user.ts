@@ -26,11 +26,13 @@ export interface User {
 
 export interface CreateUserRequest {
   username: string;
+  isAgent: boolean;
+  email?: string;
+  countryCode?: string;
+  phoneNumber?: string;
   citizenship: string[];
   legalResidence: string[];
-  locationStatus: "LOCAL" | "FOREIGN";
-  country?: string;
-  preferredLanguage?: string;
+  preferredLanguage?: "en" | "ar";
 }
 
 export interface GetUserResponse {

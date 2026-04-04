@@ -187,20 +187,22 @@ function CheckoutContent() {
       const token = await getAccessToken();
       const headers = { Authorization: `Bearer ${token}` };
 
+      // Username: alphanumeric only (no underscores), 3-20 chars
       const prefix = email
         .split("@")[0]
         .replace(/[^a-zA-Z0-9]/g, "")
         .slice(0, 14);
-      const suffix = Math.random().toString(36).slice(2, 6);
-      const username = `${prefix}_${suffix}`;
+      const suffix = Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4);
+      const username = `${prefix}${suffix}`.slice(0, 20);
 
       await axios.post(
         `${API_URL}/users`,
         {
           username,
+          isAgent: false,
+          email,
           citizenship: [citizenship],
           legalResidence: [legalResidence],
-          locationStatus: "FOREIGN",
           preferredLanguage: "en",
         },
         { headers }

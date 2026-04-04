@@ -188,30 +188,42 @@ function CheckoutContent() {
       const token = await getAccessToken();
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Username: alphanumeric only (no underscores), 3-20 chars
-      const prefix = email
-        .split("@")[0]
-        .replace(/[^a-zA-Z0-9]/g, "")
-        .slice(0, 14);
-      const suffix = Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4);
-      const username = `${prefix}${suffix}`.slice(0, 20);
+      // Step 1: Create user (skip if already exists)
+      try {
+        const prefix = email
+          .split("@")[0]
+          .replace(/[^a-zA-Z0-9]/g, "")
+          .slice(0, 14);
+        const suffix = Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4);
+        const username = `${prefix}${suffix}`.slice(0, 20);
 
-      await axios.post(
-        `${API_URL}/users`,
-        {
-          username,
-          isAgent: false,
-          email,
-          citizenship: [citizenship],
-          legalResidence: [legalResidence],
-          preferredLanguage: "en",
-        },
-        { headers }
-      );
+        await axios.post(
+          `${API_URL}/users`,
+          {
+            username,
+            isAgent: false,
+            email,
+            citizenship: [citizenship],
+            legalResidence: [legalResidence],
+            preferredLanguage: "en",
+          },
+          { headers }
+        );
+      } catch (err: unknown) {
+        // 409 = user already exists — fine, continue
+        if (!axios.isAxiosError(err) || err.response?.status !== 409) {
+          const msg = axios.isAxiosError(err)
+            ? err.response?.data?.message || err.message
+            : "Failed to create account";
+          setError(msg);
+          setCreatingUser(false);
+          return;
+        }
+      }
 
       setUserCreated(true);
 
-      // Create KYC session
+      // Step 2: Create KYC session
       try {
         const kycRes = await axios.post(
           `${API_URL}/kyc/didit/session`,
@@ -230,7 +242,7 @@ function CheckoutContent() {
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err)
         ? err.response?.data?.message || err.message
-        : "Failed to create account";
+        : "Something went wrong";
       setError(msg);
     }
     setCreatingUser(false);

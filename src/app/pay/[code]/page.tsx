@@ -265,13 +265,14 @@ function CheckoutContent() {
 
   // Step 2: Verify OTP code → creates Privy account + wallet
   const handleVerifyOtp = async () => {
-    if (!otpCode || otpCode.length < 4) return;
+    if (!otpCode || otpCode.length < 6) return;
     setError(null);
     try {
       await loginWithCode({ code: otpCode });
       // authenticated will flip to true, triggering the useEffect below
-    } catch {
-      setError("Invalid code. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Invalid code. Please try again.";
+      setError(msg);
       setOtpCode("");
     }
   };
@@ -723,21 +724,74 @@ function CheckoutContent() {
               Verify Your Email
             </h2>
             <p className="text-sm text-gray-500">
-              We sent a code to <span className="font-medium text-gray-700">{email}</span>
+              We sent a 6-digit code to{" "}
+              <span className="font-medium text-gray-700">{email}</span>
             </p>
+            <a
+              href={
+                email.includes("gmail")
+                  ? "https://mail.google.com"
+                  : email.includes("outlook") || email.includes("hotmail") || email.includes("live")
+                  ? "https://outlook.live.com"
+                  : email.includes("yahoo")
+                  ? "https://mail.yahoo.com"
+                  : `mailto:${email}`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200"
+            >
+              Open Email &rarr;
+            </a>
 
-            <Input
-              label="Verification Code"
-              placeholder="Enter code"
-              value={otpCode}
-              onChange={(e) => setOtpCode(e.target.value)}
-              autoFocus
-            />
+            <div className="flex justify-center gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <input
+                  key={i}
+                  id={`otp-${i}`}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={otpCode[i] || ""}
+                  autoFocus={i === 0}
+                  className="h-12 w-12 rounded-xl border-2 border-gray-200 bg-white text-center text-xl font-bold text-gray-900 focus:border-green-500 focus:outline-none"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, "");
+                    if (!val && !e.target.value) {
+                      // Backspace on empty — handled in onKeyDown
+                      return;
+                    }
+                    const newCode = otpCode.split("");
+                    newCode[i] = val.slice(-1);
+                    const joined = newCode.join("");
+                    setOtpCode(joined);
+                    if (val && i < 5) {
+                      document.getElementById(`otp-${i + 1}`)?.focus();
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Backspace" && !otpCode[i] && i > 0) {
+                      document.getElementById(`otp-${i - 1}`)?.focus();
+                    }
+                  }}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pasted = e.clipboardData
+                      .getData("text")
+                      .replace(/[^0-9]/g, "")
+                      .slice(0, 6);
+                    setOtpCode(pasted);
+                    const focusIdx = Math.min(pasted.length, 5);
+                    document.getElementById(`otp-${focusIdx}`)?.focus();
+                  }}
+                />
+              ))}
+            </div>
 
             <Button
               size="lg"
               className="w-full"
-              disabled={!otpCode || otpCode.length < 4}
+              disabled={otpCode.length < 6}
               loading={emailLoginState?.status === "submitting-code" || creatingUser}
               onClick={handleVerifyOtp}
             >
@@ -747,10 +801,11 @@ function CheckoutContent() {
             <button
               className="w-full text-center text-sm text-green-600 hover:text-green-700"
               onClick={async () => {
+                setError(null);
                 try {
                   await sendCode({ email });
                 } catch {
-                  // ignore
+                  setError("Failed to resend code");
                 }
               }}
             >

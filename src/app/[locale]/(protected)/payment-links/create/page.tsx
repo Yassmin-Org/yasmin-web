@@ -1,6 +1,5 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ import { copyToClipboard } from "@/lib/utils";
 type Step = "form" | "success";
 
 export default function CreatePaymentLinkPage() {
-  const tc = useTranslations("common");
   const router = useRouter();
 
   const [step, setStep] = useState<Step>("form");
@@ -24,6 +22,7 @@ export default function CreatePaymentLinkPage() {
   const [note, setNote] = useState("");
   const [paymentCode, setPaymentCode] = useState("");
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [createRequest, { isLoading }] = useCreatePaymentRequestMutation();
 
@@ -32,18 +31,29 @@ export default function CreatePaymentLinkPage() {
     : "";
 
   const handleCreate = async () => {
+    setError(null);
     try {
       const result = await createRequest({
         amount: parseFloat(amount),
         type: PaymentRequestType.PAYLINK,
         note: note || undefined,
       }).unwrap();
+
+      // Extract code from response — backend wraps in { data: { code, ... } }
       const resData = result as unknown as Record<string, unknown>;
       const innerData = resData?.data as Record<string, unknown> | undefined;
-      setPaymentCode((innerData?.code || resData?.code || "") as string);
+      const code = innerData?.code || resData?.code;
+
+      if (!code) {
+        setError("Payment link created but no code returned. Please try again.");
+        return;
+      }
+
+      setPaymentCode(code as string);
       setStep("success");
-    } catch {
-      // Error handled by RTK Query
+    } catch (err: unknown) {
+      const apiErr = err as { message?: string; data?: { message?: string } };
+      setError(apiErr?.data?.message || apiErr?.message || "Failed to create payment link.");
     }
   };
 
@@ -87,6 +97,12 @@ export default function CreatePaymentLinkPage() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
+
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-center text-sm text-red-700">
+              {error}
+            </div>
+          )}
 
           <Button
             size="lg"
@@ -138,11 +154,11 @@ export default function CreatePaymentLinkPage() {
               ) : (
                 <Copy className="mr-2 h-4 w-4" />
               )}
-              {copied ? tc("copied") : tc("copy")}
+              {copied ? "Copied!" : "Copy"}
             </Button>
             <Button size="lg" className="flex-1" onClick={handleShare}>
               <Share2 className="mr-2 h-4 w-4" />
-              {tc("share")}
+              Share
             </Button>
           </div>
 
@@ -155,6 +171,7 @@ export default function CreatePaymentLinkPage() {
                 setAmount("");
                 setNote("");
                 setPaymentCode("");
+                setError(null);
               }}
             >
               <Plus className="mr-2 h-4 w-4" />

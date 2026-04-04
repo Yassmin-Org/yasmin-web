@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { CheckoutProgress } from "@/components/checkout/checkout-progress";
 import { LanguageSelector } from "@/components/checkout/language-selector";
 import { countries } from "@/lib/data/countries";
-import { copyToClipboard, formatTimeRemaining, truncateAddress } from "@/lib/utils";
+import { copyToClipboard, formatTimeRemaining } from "@/lib/utils";
 import { generateConfirmationCode } from "@/lib/utils/confirmation-code";
 import {
   ArrowLeft,
@@ -23,6 +23,7 @@ import {
   CreditCard,
   ExternalLink,
   Download,
+  AlertTriangle,
 } from "lucide-react";
 import axios from "axios";
 
@@ -52,7 +53,8 @@ interface PaymentLinkData {
 }
 
 function CheckoutContent() {
-  const { code } = useParams<{ code: string }>();
+  const params = useParams();
+  const code = typeof params.code === "string" ? params.code : "";
   const { login, authenticated, ready, getAccessToken } = usePrivy();
 
   const [step, setStep] = useState<CheckoutStep>("landing");
@@ -62,11 +64,11 @@ function CheckoutContent() {
 
   // Fiat flow state
   const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
   const [citizenship, setCitizenship] = useState("");
   const [legalResidence, setLegalResidence] = useState("");
   const [creatingUser, setCreatingUser] = useState(false);
+  const [loggingIn, setLoggingIn] = useState(false);
 
   // KYC state
   const [kycUrl, setKycUrl] = useState<string | null>(null);
@@ -83,23 +85,27 @@ function CheckoutContent() {
 
   // Load payment link data
   useEffect(() => {
+    if (!code) return;
     const fetchLink = async () => {
       try {
-        const res = await axios.get(`${API_URL}/transactions/payment-requests/${code}`);
+        const res = await axios.get(
+          `${API_URL}/transactions/payment-requests/${code}`
+        );
         const data = res.data?.data || res.data;
         if (!data) throw new Error("Payment link not found");
 
-        // Fetch receiver info
         let receiverUsername = "merchant";
         let receiverWallet = "";
         try {
-          const userRes = await axios.get(`${API_URL}/users/id?username=${data.receiverUserId}`);
+          const userRes = await axios.get(
+            `${API_URL}/users/id?username=${data.receiverUserId}`
+          );
           const userData = userRes.data?.data || userRes.data;
           receiverUsername = userData?.username || "merchant";
           receiverWallet = userData?.walletAddress || "";
         } catch {
-          // If we can't fetch user details, use ID
-          receiverUsername = data.receiverUserId?.slice(0, 8) || "merchant";
+          receiverUsername =
+            data.receiverUserId?.slice(0, 8) || "merchant";
         }
 
         setLinkData({
@@ -126,6 +132,7 @@ function CheckoutContent() {
   useEffect(() => {
     if (ready && authenticated) {
       setGetAccessToken(getAccessToken);
+      setLoggingIn(false);
     }
   }, [ready, authenticated, getAccessToken]);
 
@@ -155,13 +162,16 @@ function CheckoutContent() {
   const handleCreateUser = useCallback(async () => {
     if (!authenticated || creatingUser) return;
     setCreatingUser(true);
+    setError(null);
 
     try {
       const token = await getAccessToken();
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Generate username from email
-      const prefix = email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "").slice(0, 14);
+      const prefix = email
+        .split("@")[0]
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .slice(0, 14);
       const suffix = Math.random().toString(36).slice(2, 6);
       const username = `${prefix}_${suffix}`;
 
@@ -177,7 +187,7 @@ function CheckoutContent() {
         { headers }
       );
 
-      // Now create KYC session
+      // Create KYC session
       try {
         const kycRes = await axios.post(
           `${API_URL}/kyc/didit/session`,
@@ -189,7 +199,7 @@ function CheckoutContent() {
           setKycUrl(kycData.url);
         }
       } catch {
-        // KYC session creation may fail, continue
+        // KYC session may fail, continue anyway
       }
 
       setStep("fiat-kyc");
@@ -205,14 +215,14 @@ function CheckoutContent() {
   // Handle fiat details submission
   const handleFiatDetails = async () => {
     if (!authenticated) {
-      // Need to authenticate first
-      await login({ loginMethods: ["email"] });
+      setLoggingIn(true);
+      login({ loginMethods: ["email"] });
       return;
     }
     await handleCreateUser();
   };
 
-  // Trigger user creation when Privy auth completes during fiat flow
+  // Auto-trigger user creation when Privy auth completes during fiat flow
   useEffect(() => {
     if (
       step === "fiat-details" &&
@@ -225,64 +235,102 @@ function CheckoutContent() {
     ) {
       handleCreateUser();
     }
-  }, [authenticated, step, email, selectedCountry, citizenship, legalResidence, creatingUser, handleCreateUser]);
+  }, [
+    authenticated,
+    step,
+    email,
+    selectedCountry,
+    citizenship,
+    legalResidence,
+    creatingUser,
+    handleCreateUser,
+  ]);
 
   // Handle deposit creation after KYC
   const handleCreateDeposit = async () => {
+    if (!linkData) {
+      setError("Payment link data missing.");
+      return;
+    }
+
+    setError(null);
+
     try {
       const token = await getAccessToken();
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Get available deposit countries/currencies/rails
-      const countriesRes = await axios.get(
-        `${API_URL}/walapay/deposit/countries`,
-        { headers }
-      );
-      const depositCountries = countriesRes.data?.data || [];
-
-      // Try to find customer's country in deposit options
-      const countryMatch = depositCountries.find(
-        (c: { code: string }) => c.code === selectedCountry
-      );
-
-      if (!countryMatch) {
-        // Try Bridge
-        const bridgeRes = await axios.get(
-          `${API_URL}/bridge/deposit/countries`,
+      // Check Walapay countries first
+      let provider: "walapay" | "bridge" = "walapay";
+      try {
+        const countriesRes = await axios.get(
+          `${API_URL}/walapay/deposit/countries`,
           { headers }
         );
-        const bridgeCountries = bridgeRes.data?.data || [];
-        const bridgeMatch = bridgeCountries.find(
+        const depositCountries = countriesRes.data?.data || [];
+        const match = depositCountries.find(
           (c: { code: string }) => c.code === selectedCountry
         );
+        if (!match) provider = "bridge";
+      } catch {
+        provider = "bridge";
+      }
 
-        if (!bridgeMatch) {
-          setError("Deposits are not available in your country yet.");
+      // If Bridge, check Bridge countries
+      if (provider === "bridge") {
+        try {
+          const bridgeRes = await axios.get(
+            `${API_URL}/bridge/deposit/countries`,
+            { headers }
+          );
+          const bridgeCountries = bridgeRes.data?.data || [];
+          const bridgeMatch = bridgeCountries.find(
+            (c: { code: string }) => c.code === selectedCountry
+          );
+          if (!bridgeMatch) {
+            setError(
+              "Deposits are not available in your country yet. Please try paying with crypto."
+            );
+            return;
+          }
+        } catch {
+          setError("Could not verify deposit availability. Please try again.");
           return;
         }
       }
 
       // Get currency
-      const currRes = await axios.get(
-        `${API_URL}/walapay/deposit/currency?country=${selectedCountry}`,
-        { headers }
-      );
+      const currUrl =
+        provider === "walapay"
+          ? `${API_URL}/walapay/deposit/currency?country=${selectedCountry}`
+          : `${API_URL}/bridge/deposit/currency?country=${selectedCountry}`;
+      const currRes = await axios.get(currUrl, { headers });
       const currencies = currRes.data?.data || [];
-      const currency = currencies[0]?.code || "USD";
+
+      if (currencies.length === 0) {
+        setError("No payment methods available for your country.");
+        return;
+      }
+      const currency = currencies[0]?.code;
 
       // Get rail
-      const railRes = await axios.get(
-        `${API_URL}/walapay/deposit/rail?country=${selectedCountry}&currency=${currency}`,
-        { headers }
-      );
+      const railUrl =
+        provider === "walapay"
+          ? `${API_URL}/walapay/deposit/rail?country=${selectedCountry}&currency=${currency}`
+          : `${API_URL}/bridge/deposit/rail?country=${selectedCountry}&currency=${currency}`;
+      const railRes = await axios.get(railUrl, { headers });
       const rails = railRes.data?.data || [];
-      const rail = rails[0]?.code || "bank_transfer";
+
+      if (rails.length === 0) {
+        setError("No payment rails available for your country and currency.");
+        return;
+      }
+      const rail = rails[0]?.code;
 
       // Create deposit
       const depositRes = await axios.post(
         `${API_URL}/transactions/deposit`,
         {
-          amount: linkData!.amount,
+          amount: linkData.amount,
           currency,
           country: selectedCountry,
           rail,
@@ -316,52 +364,63 @@ function CheckoutContent() {
     );
   }
 
-  // Error or inactive link
-  if (error || !linkData) {
+  // Error or missing link
+  if (!linkData && error) {
     return (
-      <Card className="w-full max-w-md space-y-4 text-center">
+      <Card className="w-full max-w-md space-y-4 p-6 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
-          <span className="text-xl">!</span>
+          <AlertTriangle className="h-6 w-6 text-red-600" />
         </div>
-        <p className="text-sm text-red-600">{error || "Payment link not found"}</p>
+        <p className="text-sm text-red-600">{error}</p>
       </Card>
     );
   }
+
+  if (!linkData) return null;
 
   if (linkData.isCancelled) {
     return (
-      <Card className="w-full max-w-md space-y-4 text-center">
+      <Card className="w-full max-w-md space-y-4 p-6 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
-          <span className="text-xl">✕</span>
+          <AlertTriangle className="h-6 w-6 text-gray-400" />
         </div>
         <h2 className="text-lg font-semibold">Link Inactive</h2>
-        <p className="text-sm text-gray-500">This payment link is no longer active.</p>
+        <p className="text-sm text-gray-500">
+          This payment link is no longer active.
+        </p>
       </Card>
     );
   }
 
-  const isExpired = new Date(linkData.expiration) < new Date();
+  const expirationDate = new Date(linkData.expiration);
+  const isExpired =
+    !isNaN(expirationDate.getTime()) && expirationDate < new Date();
   if (isExpired) {
     return (
-      <Card className="w-full max-w-md space-y-4 text-center">
+      <Card className="w-full max-w-md space-y-4 p-6 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
-          <span className="text-xl">⏰</span>
+          <AlertTriangle className="h-6 w-6 text-gray-400" />
         </div>
         <h2 className="text-lg font-semibold">Link Expired</h2>
-        <p className="text-sm text-gray-500">This payment link has expired.</p>
+        <p className="text-sm text-gray-500">
+          This payment link has expired.
+        </p>
       </Card>
     );
   }
 
+  const hasWallet = !!linkData.receiverWalletAddress;
+
   return (
-    <Card className="w-full max-w-md space-y-0 p-0 overflow-hidden">
+    <Card className="w-full max-w-md overflow-hidden p-0">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
         {step !== "landing" ? (
           <button
             onClick={() => {
-              if (step === "crypto") setStep("landing");
-              else if (step === "fiat-details") setStep("landing");
+              setError(null);
+              if (step === "crypto" || step === "fiat-details")
+                setStep("landing");
               else if (step === "fiat-kyc") setStep("fiat-details");
             }}
             className="rounded-lg p-1 hover:bg-gray-100"
@@ -380,33 +439,48 @@ function CheckoutContent() {
         <LanguageSelector />
       </div>
 
-      <div className="px-6 py-6 space-y-6">
+      <div className="space-y-6 px-6 py-6">
+        {/* Error banner */}
+        {error && step !== "landing" && (
+          <div className="rounded-lg bg-red-50 p-3 text-center text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         {/* LANDING */}
         {step === "landing" && (
           <>
-            <div className="text-center space-y-1">
-              <p className="text-sm text-gray-500">Pay @{linkData.receiverUsername}</p>
+            <div className="space-y-1 text-center">
+              <p className="text-sm text-gray-500">
+                Pay @{linkData.receiverUsername}
+              </p>
               <p className="text-3xl font-bold text-gray-900">
                 ${linkData.amount.toFixed(2)}
               </p>
               {linkData.note && (
-                <p className="text-sm text-gray-400">&ldquo;{linkData.note}&rdquo;</p>
+                <p className="text-sm text-gray-400">
+                  &ldquo;{linkData.note}&rdquo;
+                </p>
               )}
             </div>
 
             <div className="space-y-3">
-              <button
-                onClick={() => setStep("crypto")}
-                className="flex w-full items-center gap-4 rounded-xl border-2 border-gray-200 p-4 transition-colors hover:border-green-500 hover:bg-green-50"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                  <Wallet className="h-5 w-5 text-purple-600" />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-900">Pay with Crypto</p>
-                  <p className="text-xs text-gray-500">Send USDC on Base</p>
-                </div>
-              </button>
+              {hasWallet && (
+                <button
+                  onClick={() => setStep("crypto")}
+                  className="flex w-full items-center gap-4 rounded-xl border-2 border-gray-200 p-4 transition-colors hover:border-green-500 hover:bg-green-50"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                    <Wallet className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-gray-900">
+                      Pay with Crypto
+                    </p>
+                    <p className="text-xs text-gray-500">Send USDC on Base</p>
+                  </div>
+                </button>
+              )}
 
               <button
                 onClick={() => setStep("fiat-details")}
@@ -416,8 +490,12 @@ function CheckoutContent() {
                   <CreditCard className="h-5 w-5 text-blue-600" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm font-semibold text-gray-900">Pay with Card / Bank</p>
-                  <p className="text-xs text-gray-500">Visa, Mastercard, Bank Transfer</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    Pay with Card / Bank
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Visa, Mastercard, Bank Transfer
+                  </p>
                 </div>
               </button>
             </div>
@@ -425,10 +503,13 @@ function CheckoutContent() {
         )}
 
         {/* CRYPTO PATH */}
-        {step === "crypto" && (
+        {step === "crypto" && hasWallet && (
           <div className="space-y-4 text-center">
             <p className="text-sm text-gray-500">
-              Send exactly <span className="font-semibold">{linkData.amount.toFixed(2)} USDC</span>
+              Send exactly{" "}
+              <span className="font-semibold">
+                {linkData.amount.toFixed(2)} USDC
+              </span>
             </p>
             <p className="text-xs text-gray-400">Network: Base</p>
 
@@ -441,7 +522,7 @@ function CheckoutContent() {
             </div>
 
             <div className="rounded-lg bg-gray-50 p-3">
-              <p className="break-all text-xs font-mono text-gray-600">
+              <p className="break-all font-mono text-xs text-gray-600">
                 {linkData.receiverWalletAddress}
               </p>
             </div>
@@ -460,7 +541,8 @@ function CheckoutContent() {
             </Button>
 
             <div className="rounded-lg bg-yellow-50 p-3 text-xs text-yellow-700">
-              Only send USDC on the Base network. Other tokens or networks will be lost.
+              Only send USDC on the Base network. Other tokens or networks will
+              be lost.
             </div>
 
             <Button className="w-full" onClick={handleCryptoSuccess}>
@@ -475,14 +557,20 @@ function CheckoutContent() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
               <Check className="h-7 w-7 text-green-600" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Payment Sent!</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Payment Sent!
+            </h2>
             <p className="text-sm text-gray-500">
               ${linkData.amount.toFixed(2)} to @{linkData.receiverUsername}
             </p>
-            <Card className="bg-green-50 border-green-200">
+            <Card className="border-green-200 bg-green-50">
               <p className="text-xs text-gray-500">Confirmation Code</p>
-              <p className="text-2xl font-bold text-green-700">{confirmationCode}</p>
-              <p className="mt-1 text-xs text-gray-400">Save this code as your receipt</p>
+              <p className="text-2xl font-bold text-green-700">
+                {confirmationCode}
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                Save this code as your receipt
+              </p>
             </Card>
           </div>
         )}
@@ -491,7 +579,9 @@ function CheckoutContent() {
         {step === "fiat-details" && (
           <div className="space-y-4">
             <CheckoutProgress currentStep={1} totalSteps={4} />
-            <h2 className="text-lg font-semibold text-gray-900">Your Details</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Your Details
+            </h2>
 
             <Input
               label="Email"
@@ -501,15 +591,10 @@ function CheckoutContent() {
               onChange={(e) => setEmail(e.target.value)}
             />
 
-            <Input
-              label="Full Name"
-              placeholder="John Doe"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">Country</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Country
+              </label>
               <select
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
@@ -525,7 +610,9 @@ function CheckoutContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">Citizenship</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Citizenship
+              </label>
               <select
                 value={citizenship}
                 onChange={(e) => setCitizenship(e.target.value)}
@@ -541,7 +628,9 @@ function CheckoutContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">Legal Residence</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Legal Residence
+              </label>
               <select
                 value={legalResidence}
                 onChange={(e) => setLegalResidence(e.target.value)}
@@ -559,11 +648,13 @@ function CheckoutContent() {
             <Button
               size="lg"
               className="w-full"
-              disabled={!email || !fullName || !selectedCountry || !citizenship || !legalResidence}
-              loading={creatingUser}
+              disabled={
+                !email || !selectedCountry || !citizenship || !legalResidence
+              }
+              loading={creatingUser || loggingIn}
               onClick={handleFiatDetails}
             >
-              Continue
+              {loggingIn ? "Verifying email..." : "Continue"}
             </Button>
           </div>
         )}
@@ -572,7 +663,9 @@ function CheckoutContent() {
         {step === "fiat-kyc" && (
           <div className="space-y-4">
             <CheckoutProgress currentStep={2} totalSteps={4} />
-            <h2 className="text-lg font-semibold text-gray-900">Verify Your Identity</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Verify Your Identity
+            </h2>
 
             {kycUrl ? (
               <div className="overflow-hidden rounded-xl border border-gray-200">
@@ -605,7 +698,9 @@ function CheckoutContent() {
         {step === "fiat-deposit" && (
           <div className="space-y-4">
             <CheckoutProgress currentStep={3} totalSteps={4} />
-            <h2 className="text-lg font-semibold text-gray-900">Complete Payment</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Complete Payment
+            </h2>
 
             <div
               className={`rounded-lg p-3 text-center text-sm font-medium ${
@@ -632,7 +727,11 @@ function CheckoutContent() {
                   </div>
                   <button
                     onClick={async () => {
-                      await copyToClipboard(value);
+                      try {
+                        await copyToClipboard(value);
+                      } catch {
+                        // clipboard may not be available
+                      }
                     }}
                     className="rounded p-1 hover:bg-gray-200"
                   >
@@ -642,7 +741,7 @@ function CheckoutContent() {
               ))}
             </Card>
 
-            <p className="text-xs text-center text-gray-400">
+            <p className="text-center text-xs text-gray-400">
               Transfer this amount using your banking app
             </p>
 
@@ -664,22 +763,28 @@ function CheckoutContent() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
               <Check className="h-7 w-7 text-green-600" />
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Payment Sent!</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Payment Sent!
+            </h2>
             <p className="text-sm text-gray-500">
               ${linkData.amount.toFixed(2)} to @{linkData.receiverUsername}
             </p>
 
-            <Card className="bg-green-50 border-green-200">
+            <Card className="border-green-200 bg-green-50">
               <p className="text-xs text-gray-500">Confirmation Code</p>
-              <p className="text-2xl font-bold text-green-700">{confirmationCode}</p>
-              <p className="mt-1 text-xs text-gray-400">Save this code as your receipt</p>
+              <p className="text-2xl font-bold text-green-700">
+                {confirmationCode}
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                Save this code as your receipt
+              </p>
             </Card>
 
             <p className="text-xs text-gray-400">
               The merchant will receive your payment shortly.
             </p>
 
-            <Button variant="outline" className="w-full" onClick={() => {}}>
+            <Button variant="outline" className="w-full">
               <Download className="mr-2 h-4 w-4" />
               Download Yasmin App
             </Button>
@@ -701,7 +806,9 @@ export default function PayPage() {
       appId={PRIVY_APP_ID}
       config={{
         appearance: { theme: "light", accentColor: "#16A34A" },
-        embeddedWallets: { ethereum: { createOnLogin: "users-without-wallets" } },
+        embeddedWallets: {
+          ethereum: { createOnLogin: "users-without-wallets" },
+        },
         loginMethods: ["email"],
       }}
     >

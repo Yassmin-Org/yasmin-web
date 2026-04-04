@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useCreatePaymentRequestMutation } from "@/lib/api/slices/transactions";
 import { PaymentRequestType } from "@/lib/types";
+import { useAuth } from "@/lib/contexts/auth-context";
 import { QRCodeSVG } from "qrcode.react";
 import { ArrowLeft, Check, Copy, Share2, Plus, List } from "lucide-react";
 import { copyToClipboard } from "@/lib/utils";
@@ -16,6 +17,7 @@ type Step = "form" | "success";
 
 export default function CreatePaymentLinkPage() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const [step, setStep] = useState<Step>("form");
   const [amount, setAmount] = useState("");
@@ -26,8 +28,9 @@ export default function CreatePaymentLinkPage() {
 
   const [createRequest, { isLoading }] = useCreatePaymentRequestMutation();
 
+  const walletParam = user?.walletAddress ? `?w=${user.walletAddress}` : "";
   const paymentLink = paymentCode
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/pay/${paymentCode}`
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/pay/${paymentCode}${walletParam}`
     : "";
 
   const handleCreate = async () => {

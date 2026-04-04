@@ -96,16 +96,35 @@ function CheckoutContent() {
 
         let receiverUsername = "merchant";
         let receiverWallet = "";
-        try {
-          const userRes = await axios.get(
-            `${API_URL}/users/id?username=${data.receiverUserId}`
-          );
-          const userData = userRes.data?.data || userRes.data;
-          receiverUsername = userData?.username || "merchant";
-          receiverWallet = userData?.walletAddress || "";
-        } catch {
-          receiverUsername =
-            data.receiverUserId?.slice(0, 8) || "merchant";
+
+        // Try to get receiver info from the response
+        const receiver = data.receiver;
+        if (receiver?.firstName) {
+          receiverUsername = receiver.firstName;
+        }
+
+        // Check URL params for wallet address (passed when creating link)
+        if (typeof window !== "undefined") {
+          const urlParams = new URLSearchParams(window.location.search);
+          const walletParam = urlParams.get("w");
+          if (walletParam) {
+            receiverWallet = walletParam;
+          }
+        }
+
+        // Try fetching user info via search (public endpoint)
+        if (!receiverWallet) {
+          try {
+            const searchRes = await axios.get(
+              `${API_URL}/users/availability?username=${data.receiverUserId}`,
+            );
+            // If user found, the receiverUserId might be a username
+            if (searchRes.data?.data?.isAvailable === false) {
+              receiverUsername = data.receiverUserId;
+            }
+          } catch {
+            // Ignore
+          }
         }
 
         setLinkData({

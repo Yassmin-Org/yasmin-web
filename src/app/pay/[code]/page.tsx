@@ -72,6 +72,7 @@ function CheckoutContent() {
   const [creatingUser, setCreatingUser] = useState(false);
   const [userCreated, setUserCreated] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [sendingCode, setSendingCode] = useState(false);
 
   // KYC state
   const [kycUrl, setKycUrl] = useState<string | null>(null);
@@ -253,31 +254,45 @@ function CheckoutContent() {
   const handleFiatDetails = async () => {
     if (!email || !selectedCountry || !citizenship || !legalResidence) return;
     setError(null);
+    setSendingCode(true);
 
-    // Check if email already has a Yasmin account
-    let emailExists = false;
     try {
-      const res = await axios.get(
-        `${API_URL}/users/availability?email=${encodeURIComponent(email)}`
-      );
-      const data = res.data?.data || res.data;
-      emailExists = data?.isAvailable === false;
-    } catch {
-      // Can't check — try sendCode anyway
-    }
-
-    if (emailExists) {
-      // Existing user → Privy login modal (handles its own OTP)
-      login({ loginMethods: ["email"] });
-    } else {
-      // New user → inline OTP flow
+      // Check if email already has a Yasmin account
+      let emailExists = false;
       try {
-        await sendCode({ email });
-        setStep("fiat-otp");
+        const res = await axios.get(
+          `${API_URL}/users/availability?email=${encodeURIComponent(email)}`
+        );
+        const data = res.data?.data || res.data;
+        emailExists = data?.isAvailable === false;
       } catch {
-        // Fallback to login modal if sendCode fails for any reason
-        login({ loginMethods: ["email"] });
+        // Can't check — try sendCode anyway
       }
+
+      if (emailExists) {
+        // Existing user → Privy login modal (handles its own OTP)
+        setSendingCode(false);
+        login({ loginMethods: ["email"] });
+      } else {
+        // New user → inline OTP flow
+        try {
+          await sendCode({ email });
+          setSendingCode(false);
+          setStep("fiat-otp");
+        } catch (err: unknown) {
+          setSendingCode(false);
+          // If sendCode fails, try login modal as fallback
+          const msg = err instanceof Error ? err.message : "";
+          if (msg.includes("already") || msg.includes("linked")) {
+            login({ loginMethods: ["email"] });
+          } else {
+            setError(msg || "Failed to send verification code. Please try again.");
+          }
+        }
+      }
+    } catch (err: unknown) {
+      setSendingCode(false);
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     }
   };
 
@@ -726,7 +741,7 @@ function CheckoutContent() {
               disabled={
                 !email || !selectedCountry || !citizenship || !legalResidence
               }
-              loading={emailLoginState?.status === "sending-code"}
+              loading={sendingCode}
               onClick={handleFiatDetails}
             >
               Continue

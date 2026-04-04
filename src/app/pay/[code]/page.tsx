@@ -485,6 +485,18 @@ function CheckoutContent() {
       </div>
 
       <div className="space-y-6 px-6 py-6">
+        {/* Persistent amount display on all steps except landing */}
+        {step !== "landing" && (
+          <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+            <span className="text-sm text-gray-500">
+              Pay @{linkData.receiverUsername}
+            </span>
+            <span className="text-lg font-bold text-gray-900">
+              ${linkData.amount.toFixed(2)}
+            </span>
+          </div>
+        )}
+
         {/* Error banner */}
         {error && step !== "landing" && (
           <div className="rounded-lg bg-red-50 p-3 text-center text-sm text-red-700">

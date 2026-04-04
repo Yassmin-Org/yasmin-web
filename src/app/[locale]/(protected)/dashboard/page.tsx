@@ -4,20 +4,17 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { useBalance } from "@/lib/hooks/use-balance";
 import { useGetActivityQuery } from "@/lib/api/slices/activity";
-import { useGetStarsQuery } from "@/lib/api/slices/stars";
 import { Card } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
-import { Send, ArrowDownCircle, Landmark, ChevronRight } from "lucide-react";
+import { LinkIcon, Landmark, ChevronRight } from "lucide-react";
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const { user } = useAuth();
   const { formattedBalance } = useBalance();
   const { data: activityData } = useGetActivityQuery({ page: 1, limit: 5 });
-  const { data: starsData } = useGetStarsQuery();
 
   const activities = activityData?.data?.activities || [];
-  const stars = starsData?.data || [];
 
   return (
     <div className="space-y-6">
@@ -33,64 +30,28 @@ export default function DashboardPage() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <Link
-          href="/send"
-          className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+          href="/payment-links/create"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-            <Send className="h-5 w-5 text-green-600" />
-          </div>
-          <span className="text-xs font-medium text-gray-700">{t("send")}</span>
-        </Link>
-        <Link
-          href="/receive"
-          className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-            <ArrowDownCircle className="h-5 w-5 text-blue-600" />
+            <LinkIcon className="h-5 w-5 text-green-600" />
           </div>
           <span className="text-xs font-medium text-gray-700">
-            {t("receive")}
+            Payment Link
           </span>
         </Link>
         <Link
           href="/deposit"
-          className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
             <Landmark className="h-5 w-5 text-purple-600" />
           </div>
-          <span className="text-xs font-medium text-gray-700">
-            {t("deposit")}
-          </span>
+          <span className="text-xs font-medium text-gray-700">Cash Out</span>
         </Link>
       </div>
-
-      {/* Quick Send */}
-      {stars.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-gray-900">
-            {t("quickSend")}
-          </h2>
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {stars.map((star) => (
-              <Link
-                key={star.id}
-                href={`/send?to=${star.username}`}
-                className="flex flex-shrink-0 flex-col items-center gap-1"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-600">
-                  {star.username.charAt(0).toUpperCase()}
-                </div>
-                <span className="max-w-[60px] truncate text-[10px] text-gray-500">
-                  {star.username}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Recent Activity */}
       <div className="space-y-3">

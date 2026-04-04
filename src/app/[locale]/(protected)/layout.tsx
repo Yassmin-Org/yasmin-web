@@ -7,13 +7,11 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   Home,
-  Send,
-  ArrowDownCircle,
   Clock,
-  User,
   LogOut,
   Landmark,
   LinkIcon,
+  ArrowUpFromLine,
 } from "lucide-react";
 
 export default function ProtectedLayout({
@@ -72,10 +70,8 @@ export default function ProtectedLayout({
       <nav className="sticky bottom-0 z-30 border-t border-gray-100 bg-white">
         <div className="mx-auto flex max-w-lg items-center justify-around py-2">
           <NavItem href="/dashboard" icon={Home} label={t("title")} />
-          <NavItem href="/send" icon={Send} label={t("send")} />
-          <NavItem href="/receive" icon={ArrowDownCircle} label={t("receive")} />
-          <NavItem href="/payment-links" icon={LinkIcon} label="Links" />
-          <NavItem href="/deposit" icon={Landmark} label={t("deposit")} />
+          <NavItem href="/payment-links/create" icon={LinkIcon} label="Payment Link" />
+          <NavItem href="/deposit" icon={Landmark} label="Cash Out" />
           <NavItem href="/activity" icon={Clock} label="Activity" />
         </div>
       </nav>

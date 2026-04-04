@@ -248,41 +248,48 @@ function CheckoutContent() {
     setCreatingUser(false);
   }, [authenticated, creatingUser, userCreated, email, citizenship, legalResidence, getAccessToken]);
 
-  // Handle fiat details submission
+  // Handle fiat details — step 1: validate form, step 2: Privy login, step 3: create user
   const handleFiatDetails = async () => {
+    if (!email || !selectedCountry || !citizenship || !legalResidence) return;
+
     if (!authenticated) {
+      // Open Privy OTP modal — user verifies email
       setLoggingIn(true);
-      login({ loginMethods: ["email"] });
+      try {
+        await login({ loginMethods: ["email"] });
+        // After login completes, authenticated will be true
+        // but we need to wait for the token to be ready
+      } catch {
+        setLoggingIn(false);
+        return;
+      }
+      setLoggingIn(false);
+      // Don't proceed here — the useEffect below will handle it
       return;
     }
+
+    // Already authenticated — create user directly
     await handleCreateUser();
   };
 
-  // Auto-trigger user creation when Privy auth completes during fiat flow
+  // After Privy auth completes, auto-create user (runs once)
   useEffect(() => {
     if (
       step === "fiat-details" &&
+      ready &&
       authenticated &&
+      !creatingUser &&
+      !userCreated &&
       email &&
       selectedCountry &&
       citizenship &&
-      legalResidence &&
-      !creatingUser &&
-      !userCreated
+      legalResidence
     ) {
       handleCreateUser();
     }
-  }, [
-    authenticated,
-    step,
-    email,
-    selectedCountry,
-    citizenship,
-    legalResidence,
-    creatingUser,
-    userCreated,
-    handleCreateUser,
-  ]);
+    // Only re-run when authenticated or userCreated changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated, userCreated]);
 
   // Handle deposit creation after KYC
   const handleCreateDeposit = async () => {

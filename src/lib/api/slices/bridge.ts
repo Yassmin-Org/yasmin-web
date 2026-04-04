@@ -1,10 +1,8 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { apiBaseQuery } from "../base-query";
 import type {
-  BridgeKycLinkResponse,
   BridgeTransferRequest,
   BridgeTransferResponse,
-  TosLinksResponse,
 } from "../../types";
 
 export const bridgeApi = createApi({
@@ -12,29 +10,36 @@ export const bridgeApi = createApi({
   baseQuery: apiBaseQuery(),
   tagTypes: ["Bridge"],
   endpoints: (builder) => ({
-    createBridgeAccount: builder.mutation<
-      { success: boolean },
+    createBridgeCustomer: builder.mutation<
+      unknown,
       { firstName: string; lastName: string; email: string }
     >({
       query: (data) => ({
-        url: "/transactions/account/activate-bridge",
+        url: "/bridge",
         method: "POST",
         body: data,
       }),
       invalidatesTags: ["Bridge"],
     }),
 
-    getBridgeKycLink: builder.query<BridgeKycLinkResponse, { customerId: string }>({
-      query: ({ customerId }) => ({
-        url: `/bridge/kyc-link?customerId=${customerId}`,
+    getBridgeKycLink: builder.query<unknown, void>({
+      query: () => ({
+        url: "/bridge/kyc-link",
       }),
       providesTags: ["Bridge"],
     }),
 
-    getTosLinks: builder.query<TosLinksResponse, void>({
+    createBridgeKycLink: builder.mutation<unknown, void>({
       query: () => ({
-        url: "/bridge/tos",
-        requiresAuth: false,
+        url: "/bridge/kyc-link",
+        method: "POST",
+      }),
+    }),
+
+    getTosLinks: builder.mutation<unknown, void>({
+      query: () => ({
+        url: "/bridge/tos-links",
+        method: "POST",
       }),
     }),
 
@@ -43,18 +48,49 @@ export const bridgeApi = createApi({
       BridgeTransferRequest
     >({
       query: (data) => ({
-        url: "/bridge/transfer",
+        url: "/bridge/transfers",
         method: "POST",
         body: data,
+      }),
+    }),
+
+    getDepositCountries: builder.query<unknown, void>({
+      query: () => ({
+        url: "/bridge/deposit/countries",
+      }),
+    }),
+
+    getDepositCurrency: builder.query<unknown, { country: string }>({
+      query: ({ country }) => ({
+        url: `/bridge/deposit/currency?country=${encodeURIComponent(country)}`,
+      }),
+    }),
+
+    getDepositRail: builder.query<unknown, { country: string; currency: string }>({
+      query: ({ country, currency }) => ({
+        url: `/bridge/deposit/rail?country=${encodeURIComponent(country)}&currency=${encodeURIComponent(currency)}`,
+      }),
+    }),
+
+    getBridgeCustomer: builder.query<unknown, { customerId: string }>({
+      query: ({ customerId }) => ({
+        url: `/bridge/customers/${customerId}`,
       }),
     }),
   }),
 });
 
 export const {
-  useCreateBridgeAccountMutation,
+  useCreateBridgeCustomerMutation,
   useGetBridgeKycLinkQuery,
   useLazyGetBridgeKycLinkQuery,
-  useGetTosLinksQuery,
+  useCreateBridgeKycLinkMutation,
+  useGetTosLinksMutation,
   useCreateBridgeTransferMutation,
+  useGetDepositCountriesQuery,
+  useLazyGetDepositCountriesQuery,
+  useGetDepositCurrencyQuery,
+  useGetDepositRailQuery,
+  useGetBridgeCustomerQuery,
+  useLazyGetBridgeCustomerQuery,
 } = bridgeApi;

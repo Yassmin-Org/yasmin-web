@@ -9,17 +9,19 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useGetKYCQuery } from "@/lib/api/slices/kyc";
 import {
-  useGetWalapayOptionsQuery,
+  useLazyGetDepositCountriesQuery,
+  useLazyGetDepositCurrencyQuery,
+  useLazyGetDepositRailQuery,
   useCreateDepositMutation,
 } from "@/lib/api/slices/walapay";
 import { ArrowLeft, Check, Copy, Shield, ChevronRight } from "lucide-react";
 import { copyToClipboard, formatTimeRemaining } from "@/lib/utils";
-import { Link } from "@/i18n/navigation";
 
 type Step =
   | "check-kyc"
   | "select-country"
-  | "select-payment"
+  | "select-currency"
+  | "select-rail"
   | "amount"
   | "confirm"
   | "details";
@@ -30,35 +32,34 @@ export default function DepositPage() {
   const tc = useTranslations("common");
   const router = useRouter();
 
-  const { data: kycData, isLoading: kycLoading } = useGetKYCQuery();
-  const { data: optionsData } = useGetWalapayOptionsQuery();
+  const { data: kycData, isLoading: kycLoading, isError: kycError } = useGetKYCQuery();
+  const [fetchCountries, { data: countriesData }] = useLazyGetDepositCountriesQuery();
+  const [fetchCurrencies, { data: currenciesData }] = useLazyGetDepositCurrencyQuery();
+  const [fetchRails, { data: railsData }] = useLazyGetDepositRailQuery();
   const [createDeposit, { isLoading: creating }] = useCreateDepositMutation();
 
   const [step, setStep] = useState<Step>("check-kyc");
-  const [selectedCountry, setSelectedCountry] = useState<string>("");
-  const [selectedCurrency, setSelectedCurrency] = useState<string>("");
-  const [selectedRail, setSelectedRail] = useState<string>("");
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedCurrency, setSelectedCurrency] = useState("");
+  const [selectedRail, setSelectedRail] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const [depositDetails, setDepositDetails] = useState<Record<string, string>>(
-    {}
-  );
-  const [countdown, setCountdown] = useState(300); // 5 minutes
+  const [depositDetails, setDepositDetails] = useState<Record<string, string>>({});
+  const [countdown, setCountdown] = useState(300);
   const [copied, setCopied] = useState<string | null>(null);
 
-  const kycStatus = kycData?.data?.status;
-  const isVerified =
-    kycStatus === "APPROVED" || kycData?.data?.isYasminVerified;
-  const countries = optionsData?.data?.countries || [];
+  const kycStatus = kycData?.data;
+  const isVerified = kycStatus?.status === "APPROVED" || kycStatus?.isYasminVerified;
 
   // Check KYC on load
   useEffect(() => {
     if (!kycLoading) {
       if (isVerified) {
         setStep("select-country");
+        fetchCountries();
       }
     }
-  }, [kycLoading, isVerified]);
+  }, [kycLoading, isVerified, fetchCountries]);
 
   // Countdown timer for deposit details
   useEffect(() => {
@@ -75,6 +76,23 @@ export default function DepositPage() {
     return () => clearInterval(interval);
   }, [step]);
 
+  const handleSelectCountry = (country: string) => {
+    setSelectedCountry(country);
+    fetchCurrencies({ country });
+    setStep("select-currency");
+  };
+
+  const handleSelectCurrency = (currency: string) => {
+    setSelectedCurrency(currency);
+    fetchRails({ country: selectedCountry, currency });
+    setStep("select-rail");
+  };
+
+  const handleSelectRail = (rail: string) => {
+    setSelectedRail(rail);
+    setStep("amount");
+  };
+
   const handleCreateDeposit = async () => {
     try {
       const result = await createDeposit({
@@ -84,7 +102,7 @@ export default function DepositPage() {
         rail: selectedRail,
         note: note || undefined,
       }).unwrap();
-      setDepositDetails(result.data.fundingInstructions || {});
+      setDepositDetails(result.data?.fundingInstructions || {});
       setCountdown(300);
       setStep("details");
     } catch {
@@ -98,24 +116,24 @@ export default function DepositPage() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const selectedCountryData = countries.find(
-    (c) => c.code === selectedCountry
-  );
+  const countries = (countriesData as { data?: Array<{ code: string; name: string }> })?.data || [];
+  const currencies = (currenciesData as { data?: Array<{ code: string; name: string }> })?.data || [];
+  const rails = (railsData as { data?: Array<{ code: string; name: string }> })?.data || [];
+
+  const goBack = () => {
+    if (step === "details") router.push("/dashboard");
+    else if (step === "confirm") setStep("amount");
+    else if (step === "amount") setStep("select-rail");
+    else if (step === "select-rail") setStep("select-currency");
+    else if (step === "select-currency") setStep("select-country");
+    else if (step === "select-country") router.back();
+    else router.back();
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <button
-          onClick={() => {
-            if (step === "details") {
-              router.push("/dashboard");
-            } else if (step === "confirm") setStep("amount");
-            else if (step === "amount") setStep("select-payment");
-            else if (step === "select-payment") setStep("select-country");
-            else router.back();
-          }}
-          className="rounded-lg p-1 hover:bg-gray-100"
-        >
+        <button onClick={goBack} className="rounded-lg p-1 hover:bg-gray-100">
           <ArrowLeft className="h-5 w-5 text-gray-600" />
         </button>
         <h1 className="text-xl font-bold text-gray-900">{t("title")}</h1>
@@ -129,73 +147,82 @@ export default function DepositPage() {
           </div>
           <h2 className="text-lg font-semibold">{tk("title")}</h2>
           <p className="text-sm text-gray-500">{tk("subtitle")}</p>
-          <Link href="/kyc">
-            <Button size="lg" className="w-full">
-              {tk("startVerification")}
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => {
+              const locale = localStorage.getItem("selected_language") || "en";
+              window.location.href = `/${locale}/kyc`;
+            }}
+          >
+            {tk("startVerification")}
+          </Button>
         </div>
       )}
 
       {/* Country Selection */}
       {step === "select-country" && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-700">
-            {t("selectCountry")}
-          </p>
+          <p className="text-sm font-medium text-gray-700">{t("selectCountry")}</p>
           <div className="space-y-2">
             {countries.map((country) => (
               <button
                 key={country.code}
-                onClick={() => {
-                  setSelectedCountry(country.code);
-                  if (country.currencies.length === 1) {
-                    setSelectedCurrency(country.currencies[0]);
-                    if (country.rails.length === 1) {
-                      setSelectedRail(country.rails[0]);
-                      setStep("amount");
-                    } else {
-                      setStep("select-payment");
-                    }
-                  } else {
-                    setStep("select-payment");
-                  }
-                }}
+                onClick={() => handleSelectCountry(country.code)}
                 className="flex w-full items-center justify-between rounded-xl border border-gray-100 bg-white p-4 transition-colors hover:bg-gray-50"
               >
                 <span className="text-sm font-medium">{country.name}</span>
                 <ChevronRight className="h-4 w-4 text-gray-400" />
               </button>
             ))}
+            {countries.length === 0 && (
+              <p className="py-8 text-center text-sm text-gray-400">Loading countries...</p>
+            )}
           </div>
         </div>
       )}
 
-      {/* Payment Method Selection */}
-      {step === "select-payment" && selectedCountryData && (
+      {/* Currency Selection */}
+      {step === "select-currency" && (
         <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-700">
-            {t("selectPaymentMethod")}
-          </p>
-          {selectedCountryData.currencies.map((currency) =>
-            selectedCountryData.rails.map((rail) => (
+          <p className="text-sm font-medium text-gray-700">{t("selectPaymentMethod")}</p>
+          <div className="space-y-2">
+            {currencies.map((currency) => (
               <button
-                key={`${currency}-${rail}`}
-                onClick={() => {
-                  setSelectedCurrency(currency);
-                  setSelectedRail(rail);
-                  setStep("amount");
-                }}
+                key={currency.code}
+                onClick={() => handleSelectCurrency(currency.code)}
                 className="flex w-full items-center justify-between rounded-xl border border-gray-100 bg-white p-4 transition-colors hover:bg-gray-50"
               >
-                <div>
-                  <p className="text-sm font-medium">{rail}</p>
-                  <p className="text-xs text-gray-400">{currency}</p>
-                </div>
+                <span className="text-sm font-medium">{currency.name || currency.code}</span>
                 <ChevronRight className="h-4 w-4 text-gray-400" />
               </button>
-            ))
-          )}
+            ))}
+            {currencies.length === 0 && (
+              <p className="py-8 text-center text-sm text-gray-400">Loading currencies...</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Rail Selection */}
+      {step === "select-rail" && (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-gray-700">{t("selectRail")}</p>
+          <div className="space-y-2">
+            {rails.map((rail) => (
+              <button
+                key={rail.code}
+                onClick={() => handleSelectRail(rail.code)}
+                className="flex w-full items-center justify-between rounded-xl border border-gray-100 bg-white p-4 transition-colors hover:bg-gray-50"
+              >
+                <span className="text-sm font-medium">{rail.name || rail.code}</span>
+                <ChevronRight className="h-4 w-4 text-gray-400" />
+              </button>
+            ))}
+            {rails.length === 0 && (
+              <p className="py-8 text-center text-sm text-gray-400">Loading payment methods...</p>
+            )}
+          </div>
         </div>
       )}
 
@@ -227,9 +254,7 @@ export default function DepositPage() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500">Amount</span>
-                <span className="font-medium">
-                  ${parseFloat(amount).toFixed(2)}
-                </span>
+                <span className="font-medium">${parseFloat(amount).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Currency</span>

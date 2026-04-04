@@ -13,6 +13,7 @@ import {
   User,
   LogOut,
   Landmark,
+  LinkIcon,
 } from "lucide-react";
 
 export default function ProtectedLayout({
@@ -73,9 +74,9 @@ export default function ProtectedLayout({
           <NavItem href="/dashboard" icon={Home} label={t("title")} />
           <NavItem href="/send" icon={Send} label={t("send")} />
           <NavItem href="/receive" icon={ArrowDownCircle} label={t("receive")} />
+          <NavItem href="/payment-links" icon={LinkIcon} label="Links" />
           <NavItem href="/deposit" icon={Landmark} label={t("deposit")} />
           <NavItem href="/activity" icon={Clock} label="Activity" />
-          <NavItem href="/profile" icon={User} label="Profile" />
         </div>
       </nav>
     </div>

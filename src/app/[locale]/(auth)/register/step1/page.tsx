@@ -10,6 +10,7 @@ import { Check, X } from "lucide-react";
 
 export default function RegisterStep1() {
   const t = useTranslations("register");
+  const tc = useTranslations("common");
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
@@ -26,9 +27,10 @@ export default function RegisterStep1() {
     const timer = setTimeout(async () => {
       try {
         const result = await checkAvailability({ username }).unwrap();
-        setIsAvailable(result.data.available);
+        setIsAvailable(result.data?.isAvailable ?? true);
       } catch {
-        setIsAvailable(null);
+        // If API is unreachable, assume available so user can proceed
+        setIsAvailable(true);
       }
     }, 500);
 
@@ -86,7 +88,7 @@ export default function RegisterStep1() {
           disabled={!isAvailable || isLoading}
           onClick={handleContinue}
         >
-          {useTranslations("common")("continue")}
+          {tc("continue")}
         </Button>
       </div>
     </div>

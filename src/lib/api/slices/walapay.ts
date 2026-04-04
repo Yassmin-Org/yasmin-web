@@ -1,11 +1,8 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { apiBaseQuery } from "../base-query";
 import type {
-  WalapayAccountResponse,
-  WalapayAccountStatusResponse,
   WalapayDepositRequest,
   WalapayDepositResponse,
-  WalapayOptionsResponse,
 } from "../../types";
 
 export const walapayApi = createApi({
@@ -13,34 +10,21 @@ export const walapayApi = createApi({
   baseQuery: apiBaseQuery(),
   tagTypes: ["Walapay"],
   endpoints: (builder) => ({
-    createWalapayAccount: builder.mutation<
-      WalapayAccountResponse,
-      {
-        firstName: string;
-        lastName: string;
-        email: string;
-        phoneNumber: string;
-        countryCode: string;
-      }
-    >({
-      query: (data) => ({
-        url: "/transactions/account/activate-wallapay",
-        method: "POST",
-        body: data,
+    getDepositCountries: builder.query<unknown, void>({
+      query: () => ({
+        url: "/walapay/deposit/countries",
       }),
-      invalidatesTags: ["Walapay"],
     }),
 
-    getAccountStatus: builder.query<WalapayAccountStatusResponse, void>({
-      query: () => ({
-        url: "/walapay/account/status",
+    getDepositCurrency: builder.query<unknown, { country: string }>({
+      query: ({ country }) => ({
+        url: `/walapay/deposit/currency?country=${encodeURIComponent(country)}`,
       }),
-      providesTags: ["Walapay"],
     }),
 
-    getWalapayOptions: builder.query<WalapayOptionsResponse, void>({
-      query: () => ({
-        url: "/walapay/options",
+    getDepositRail: builder.query<unknown, { country: string; currency: string }>({
+      query: ({ country, currency }) => ({
+        url: `/walapay/deposit/rail?country=${encodeURIComponent(country)}&currency=${encodeURIComponent(currency)}`,
       }),
     }),
 
@@ -51,14 +35,24 @@ export const walapayApi = createApi({
         body: data,
       }),
     }),
+
+    submitWalapayKYC: builder.mutation<unknown, unknown>({
+      query: (data) => ({
+        url: "/walapay/kyc",
+        method: "POST",
+        body: data,
+      }),
+    }),
   }),
 });
 
 export const {
-  useCreateWalapayAccountMutation,
-  useGetAccountStatusQuery,
-  useLazyGetAccountStatusQuery,
-  useGetWalapayOptionsQuery,
-  useLazyGetWalapayOptionsQuery,
+  useGetDepositCountriesQuery,
+  useLazyGetDepositCountriesQuery,
+  useGetDepositCurrencyQuery,
+  useLazyGetDepositCurrencyQuery,
+  useGetDepositRailQuery,
+  useLazyGetDepositRailQuery,
   useCreateDepositMutation,
+  useSubmitWalapayKYCMutation,
 } = walapayApi;

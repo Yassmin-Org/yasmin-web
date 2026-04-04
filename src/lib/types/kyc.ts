@@ -20,8 +20,7 @@ export interface CreateDiditSessionRequest {
 
 export interface CreateDiditSessionResponse {
   data: {
-    sessionId: string;
-    sessionUrl: string;
+    session_id: string;
+    url: string;
   };
-  success: boolean;
 }

@@ -45,8 +45,7 @@ export interface UserAvailabilityRequest {
 }
 
 export interface UserAvailabilityResponse {
-  data: { available: boolean };
-  success: boolean;
+  data: { identifier: string; isAvailable: boolean };
 }
 
 export interface UserSearchRequest {

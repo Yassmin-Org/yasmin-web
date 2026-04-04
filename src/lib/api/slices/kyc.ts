@@ -9,9 +9,15 @@ export const kycApi = createApi({
   endpoints: (builder) => ({
     getKYC: builder.query<GetKYCResponse, void>({
       query: () => ({
-        url: "/kyc/me",
+        url: "/accounts/status",
       }),
       providesTags: ["KYC"],
+    }),
+
+    getKYCSubmissionDetails: builder.query<unknown, void>({
+      query: () => ({
+        url: "/accounts/kyc-submission-details",
+      }),
     }),
 
     createDiditSession: builder.mutation<
@@ -25,11 +31,21 @@ export const kycApi = createApi({
       }),
       invalidatesTags: ["KYC"],
     }),
+
+    resubmitKYC: builder.mutation<unknown, void>({
+      query: () => ({
+        url: "/accounts/kyc-resubmit",
+        method: "PUT",
+      }),
+      invalidatesTags: ["KYC"],
+    }),
   }),
 });
 
 export const {
   useGetKYCQuery,
   useLazyGetKYCQuery,
+  useGetKYCSubmissionDetailsQuery,
   useCreateDiditSessionMutation,
+  useResubmitKYCMutation,
 } = kycApi;

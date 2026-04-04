@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { useCreateUserMutation } from "@/lib/api/slices/users";
+import { useAuth } from "@/lib/contexts/auth-context";
+import { Button } from "@/components/ui/button";
 
 export default function CreateAccountPage() {
   const router = useRouter();
   const { authenticated, ready } = usePrivy();
+  const { setUserFromRegistration } = useAuth();
   const [createUser] = useCreateUserMutation();
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -35,13 +38,18 @@ export default function CreateAccountPage() {
           "FOREIGN";
         const language = localStorage.getItem("selected_language") || "en";
 
-        await createUser({
+        const result = await createUser({
           username,
           citizenship,
           legalResidence,
           locationStatus,
           preferredLanguage: language,
         }).unwrap();
+
+        // Set the real user in auth context
+        if (result?.data) {
+          setUserFromRegistration(result.data);
+        }
 
         // Clean up registration data
         localStorage.removeItem("yasmin_reg_username");
@@ -50,17 +58,18 @@ export default function CreateAccountPage() {
 
         router.push("/register/pin");
       } catch (err: unknown) {
-        const message =
-          err && typeof err === "object" && "message" in err
-            ? (err as { message: string }).message
-            : "Failed to create account";
-        setError(message);
+        const apiError = err as { message?: string; data?: { message?: string } };
+        setError(
+          apiError?.data?.message ||
+          apiError?.message ||
+          "Failed to create account. Please try again."
+        );
         setCreating(false);
       }
     };
 
     create();
-  }, [ready, authenticated, creating, createUser, router]);
+  }, [ready, authenticated, creating, createUser, router, setUserFromRegistration]);
 
   if (error) {
     return (
@@ -72,15 +81,23 @@ export default function CreateAccountPage() {
           Account Creation Failed
         </h2>
         <p className="text-sm text-red-600">{error}</p>
-        <button
-          onClick={() => {
-            setError(null);
-            setCreating(false);
-          }}
-          className="text-sm font-medium text-green-600 hover:text-green-700"
-        >
-          Try Again
-        </button>
+        <div className="space-y-2">
+          <Button
+            variant="primary"
+            onClick={() => {
+              setError(null);
+              setCreating(false);
+            }}
+          >
+            Try Again
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => router.push("/register/step1")}
+          >
+            Change Username
+          </Button>
+        </div>
       </div>
     );
   }

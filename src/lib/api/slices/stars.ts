@@ -9,16 +9,15 @@ export const starsApi = createApi({
   endpoints: (builder) => ({
     getStars: builder.query<GetStarsResponse, void>({
       query: () => ({
-        url: "/users/star",
+        url: "/users/star/all",
       }),
       providesTags: ["Stars"],
     }),
 
     addStar: builder.mutation<{ success: boolean }, { starredUserId: string }>({
-      query: (data) => ({
-        url: "/users/star",
+      query: ({ starredUserId }) => ({
+        url: `/users/star/${starredUserId}`,
         method: "POST",
-        body: data,
       }),
       invalidatesTags: ["Stars"],
     }),

@@ -10,18 +10,21 @@ import { useAuth } from "@/lib/contexts/auth-context";
 export default function LoginPage() {
   const t = useTranslations("auth");
   const router = useRouter();
-  const { login, authenticated, ready } = usePrivy();
-  const { isAuthenticated, needsPin } = useAuth();
+  const { login } = usePrivy();
+  const { isAuthenticated, needsPin, isLoading, needsRegistration, isPrivyAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (ready && authenticated) {
-      if (needsPin) {
-        router.replace("/pin");
-      } else if (isAuthenticated) {
-        router.replace("/dashboard");
-      }
+    if (isLoading) return;
+
+    if (isPrivyAuthenticated && needsRegistration) {
+      // Privy user exists but no backend account — go register
+      router.replace("/register/step1");
+    } else if (needsPin) {
+      router.replace("/pin");
+    } else if (isAuthenticated) {
+      router.replace("/dashboard");
     }
-  }, [ready, authenticated, isAuthenticated, needsPin, router]);
+  }, [isLoading, isAuthenticated, needsPin, needsRegistration, isPrivyAuthenticated, router]);
 
   return (
     <div className="space-y-8 text-center">
@@ -38,7 +41,7 @@ export default function LoginPage() {
         className="w-full"
         onClick={() => login()}
       >
-        {t("loginTitle")}
+        Sign In
       </Button>
     </div>
   );

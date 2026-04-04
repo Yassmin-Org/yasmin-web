@@ -9,17 +9,20 @@ import { useEffect } from "react";
 export default function WelcomePage() {
   const t = useTranslations("welcome");
   const router = useRouter();
-  const { isAuthenticated, needsPin, isLoading } = useAuth();
+  const { isAuthenticated, needsPin, isLoading, needsRegistration, isPrivyAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (needsPin) {
-        router.replace("/pin");
-      } else if (isAuthenticated) {
-        router.replace("/dashboard");
-      }
+    if (isLoading) return;
+
+    if (isPrivyAuthenticated && needsRegistration) {
+      // Authenticated with Privy but no backend user — go to registration
+      router.replace("/register/step1");
+    } else if (needsPin) {
+      router.replace("/pin");
+    } else if (isAuthenticated) {
+      router.replace("/dashboard");
     }
-  }, [isAuthenticated, needsPin, isLoading, router]);
+  }, [isAuthenticated, needsPin, isLoading, needsRegistration, isPrivyAuthenticated, router]);
 
   if (isLoading) {
     return (
@@ -32,7 +35,6 @@ export default function WelcomePage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-8 text-center">
-        {/* Logo */}
         <div className="space-y-2">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-green-600">
             <span className="text-3xl font-bold text-white">Y</span>
@@ -41,7 +43,6 @@ export default function WelcomePage() {
           <p className="text-gray-500">{t("subtitle")}</p>
         </div>
 
-        {/* Language selector */}
         <div className="flex justify-center gap-3">
           <button
             onClick={() => {
@@ -63,7 +64,6 @@ export default function WelcomePage() {
           </button>
         </div>
 
-        {/* Actions */}
         <div className="space-y-3">
           <Button
             size="lg"

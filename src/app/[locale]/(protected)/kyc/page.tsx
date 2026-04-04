@@ -13,6 +13,7 @@ import {
   XCircle,
   Clock,
   ExternalLink,
+  AlertTriangle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -22,20 +23,36 @@ export default function KYCPage() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const { data: kycData, isLoading, refetch } = useGetKYCQuery();
+  const { data: kycData, isLoading, isError: kycError, refetch } = useGetKYCQuery();
   const [createSession, { isLoading: creating }] =
     useCreateDiditSessionMutation();
   const [sessionUrl, setSessionUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const kyc = kycData?.data;
 
   const handleStartVerification = async () => {
-    if (!user) return;
+    if (!user) {
+      setError("No user found. Please log in again.");
+      return;
+    }
+    setError(null);
     try {
       const result = await createSession({ userId: user.id }).unwrap();
-      setSessionUrl(result.data.sessionUrl);
-    } catch {
-      // Error handled by RTK Query
+      const data = result?.data as Record<string, string> | undefined;
+      const url = data?.url || data?.sessionUrl;
+      if (url) {
+        setSessionUrl(url);
+      } else {
+        setError("No verification session URL received. Please try again.");
+      }
+    } catch (err: unknown) {
+      const apiError = err as { message?: string; data?: { message?: string } };
+      setError(
+        apiError?.message ||
+        apiError?.data?.message ||
+        "Failed to start verification. Make sure you have a real account (not demo)."
+      );
     }
   };
 
@@ -100,7 +117,9 @@ export default function KYCPage() {
       <Card className="space-y-4 text-center">
         {/* Status icon */}
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-          {kyc?.status === "APPROVED" || kyc?.isYasminVerified ? (
+          {kycError ? (
+            <AlertTriangle className="h-8 w-8 text-yellow-500" />
+          ) : kyc?.status === "APPROVED" || kyc?.isYasminVerified ? (
             <CheckCircle className="h-8 w-8 text-green-600" />
           ) : kyc?.status === "REJECTED" ? (
             <XCircle className="h-8 w-8 text-red-600" />
@@ -114,7 +133,9 @@ export default function KYCPage() {
         {/* Status text */}
         <div>
           <h2 className="text-lg font-semibold text-gray-900">
-            {kyc?.status === "APPROVED" || kyc?.isYasminVerified
+            {kycError
+              ? t("subtitle")
+              : kyc?.status === "APPROVED" || kyc?.isYasminVerified
               ? t("approved")
               : kyc?.status === "REJECTED"
               ? t("rejected")
@@ -139,8 +160,15 @@ export default function KYCPage() {
         )}
       </Card>
 
+      {/* Error message */}
+      {error && (
+        <div className="rounded-lg bg-red-50 p-3 text-center text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       {/* Actions */}
-      {!kyc?.isYasminVerified && kyc?.status !== "APPROVED" && (
+      {(!kyc || (!kyc.isYasminVerified && kyc.status !== "APPROVED")) && (
         <Button
           size="lg"
           className="w-full"
@@ -160,7 +188,7 @@ export default function KYCPage() {
         </Button>
       )}
 
-      {(kyc?.isYasminVerified || kyc?.status === "APPROVED") && (
+      {kyc && (kyc.isYasminVerified || kyc.status === "APPROVED") && (
         <Button
           size="lg"
           className="w-full"
@@ -169,6 +197,16 @@ export default function KYCPage() {
           Continue to Deposit
         </Button>
       )}
+
+      {/* Back to dashboard */}
+      <Button
+        variant="ghost"
+        size="lg"
+        className="w-full"
+        onClick={() => router.push("/dashboard")}
+      >
+        Back to Dashboard
+      </Button>
     </div>
   );
 }

@@ -68,6 +68,7 @@ function CheckoutContent() {
   const [citizenship, setCitizenship] = useState("");
   const [legalResidence, setLegalResidence] = useState("");
   const [creatingUser, setCreatingUser] = useState(false);
+  const [userCreated, setUserCreated] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
 
   // KYC state
@@ -179,7 +180,7 @@ function CheckoutContent() {
 
   // Create user silently after Privy auth
   const handleCreateUser = useCallback(async () => {
-    if (!authenticated || creatingUser) return;
+    if (!authenticated || creatingUser || userCreated) return;
     setCreatingUser(true);
     setError(null);
 
@@ -208,6 +209,8 @@ function CheckoutContent() {
         { headers }
       );
 
+      setUserCreated(true);
+
       // Create KYC session
       try {
         const kycRes = await axios.post(
@@ -231,7 +234,7 @@ function CheckoutContent() {
       setError(msg);
     }
     setCreatingUser(false);
-  }, [authenticated, creatingUser, email, citizenship, legalResidence, getAccessToken]);
+  }, [authenticated, creatingUser, userCreated, email, citizenship, legalResidence, getAccessToken]);
 
   // Handle fiat details submission
   const handleFiatDetails = async () => {
@@ -252,7 +255,8 @@ function CheckoutContent() {
       selectedCountry &&
       citizenship &&
       legalResidence &&
-      !creatingUser
+      !creatingUser &&
+      !userCreated
     ) {
       handleCreateUser();
     }
@@ -264,6 +268,7 @@ function CheckoutContent() {
     citizenship,
     legalResidence,
     creatingUser,
+    userCreated,
     handleCreateUser,
   ]);
 
@@ -526,24 +531,22 @@ function CheckoutContent() {
         {/* CRYPTO PATH */}
         {step === "crypto" && hasWallet && (
           <div className="space-y-4 text-center">
-            <p className="text-sm text-gray-500">
-              Send exactly{" "}
-              <span className="font-semibold">
-                {linkData.amount.toFixed(2)} USDC
-              </span>
-            </p>
-            <p className="text-xs text-gray-400">Network: Base</p>
-
-            <div className="flex justify-center">
-              <QRCodeSVG
-                value={linkData.receiverWalletAddress}
-                size={180}
-                level="M"
-              />
+            <div className="rounded-xl bg-blue-50 p-4">
+              <p className="text-sm text-gray-700">
+                Send exactly{" "}
+                <span className="font-bold text-blue-600">
+                  {linkData.amount.toFixed(2)} USDC
+                </span>
+              </p>
+              <p className="mt-1 text-sm text-gray-700">
+                Network:{" "}
+                <span className="font-bold text-blue-600">Base</span>
+              </p>
             </div>
 
-            <div className="rounded-lg bg-gray-50 p-3">
-              <p className="break-all font-mono text-xs text-gray-600">
+            <div className="rounded-lg bg-gray-50 p-4">
+              <p className="mb-2 text-xs text-gray-500">Send to this address</p>
+              <p className="break-all font-mono text-sm text-gray-800">
                 {linkData.receiverWalletAddress}
               </p>
             </div>
@@ -562,8 +565,9 @@ function CheckoutContent() {
             </Button>
 
             <div className="rounded-lg bg-yellow-50 p-3 text-xs text-yellow-700">
-              Only send USDC on the Base network. Other tokens or networks will
-              be lost.
+              Only send <span className="font-semibold">USDC</span> on the{" "}
+              <span className="font-semibold">Base</span> network. Other tokens
+              or networks will be lost.
             </div>
 
             <Button className="w-full" onClick={handleCryptoSuccess}>

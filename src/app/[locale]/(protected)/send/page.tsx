@@ -8,10 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AmountInput } from "@/components/ui/amount-input";
 import { Card } from "@/components/ui/card";
-import {
-  useLazySearchUsersQuery,
-  useLazyGetUserByIdQuery,
-} from "@/lib/api/slices/users";
+import { useLazySearchUsersQuery } from "@/lib/api/slices/users";
 import { useCreateUsdcTransferMutation } from "@/lib/api/slices/transactions";
 import { useBalance } from "@/lib/hooks/use-balance";
 import { ArrowLeft, Check } from "lucide-react";
@@ -34,7 +31,6 @@ export default function SendPage() {
 
   const [searchUsers, { data: searchResults, isLoading: searching }] =
     useLazySearchUsersQuery();
-  const [getUserById] = useLazyGetUserByIdQuery();
   const [createTransfer, { isLoading: sending }] =
     useCreateUsdcTransferMutation();
   const { balance, formattedBalance } = useBalance();

@@ -45,7 +45,7 @@ export default function ReceivePage() {
   };
 
   const paymentLink = paymentCode
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/send/${paymentCode}`
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/pay/${paymentCode}`
     : "";
 
   const handleCopy = async () => {

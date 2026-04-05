@@ -79,7 +79,7 @@ function CheckoutContent() {
 
   // Deposit state
   const [depositDetails, setDepositDetails] = useState<Record<string, string>>({});
-  const [countdown, setCountdown] = useState(300);
+  const [countdown, setCountdown] = useState(3600);
 
   // Crypto state
   const [copied, setCopied] = useState(false);
@@ -406,7 +406,7 @@ function CheckoutContent() {
 
       const depositData = depositRes.data?.data || depositRes.data;
       setDepositDetails(depositData?.fundingInstructions || {});
-      setCountdown(300);
+      setCountdown(3600);
       setStep("fiat-deposit");
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err)

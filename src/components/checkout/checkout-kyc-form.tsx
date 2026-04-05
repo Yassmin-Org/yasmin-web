@@ -65,6 +65,8 @@ interface FormResponse {
 interface CheckoutKycFormProps {
   provider: "walapay" | "bridge";
   token: string;
+  prefillCountry?: string;
+  prefillEmail?: string;
   onComplete: () => void;
   onError: (msg: string) => void;
 }
@@ -72,6 +74,8 @@ interface CheckoutKycFormProps {
 export function CheckoutKycForm({
   provider,
   token,
+  prefillCountry,
+  prefillEmail,
   onComplete,
   onError,
 }: CheckoutKycFormProps) {
@@ -140,6 +144,9 @@ export function CheckoutKycForm({
         if (data.autofill.phoneNumber)
           values.phoneNumber = data.autofill.phoneNumber;
       }
+      // Autofill from checkout page data
+      if (prefillCountry && !values.country) values.country = prefillCountry;
+      if (prefillEmail && !values.email) values.email = prefillEmail;
       setFormValues(values);
 
       // Load dropdown options for any DROPDOWN fields
@@ -160,16 +167,32 @@ export function CheckoutKycForm({
   // Load dropdown options from endpoint
   const loadDropdownOptions = async (fieldKey: string, endpoint: string) => {
     try {
-      const url = endpoint.startsWith("http")
-        ? endpoint
-        : `${API_URL}${endpoint.startsWith("/api") ? endpoint.replace("/api", "") : endpoint}`;
+      // Fix endpoint path — backend returns paths like "/api/walapay/countries"
+      // but API_URL already includes "/api", so strip it
+      let path = endpoint;
+      if (path.startsWith("/api/")) {
+        path = path.replace("/api/", "/");
+      } else if (!path.startsWith("/")) {
+        path = `/${path}`;
+      }
+      const url = `${API_URL}${path}`;
       const res = await axios.get(url, { headers });
-      const data = res.data?.data || res.data;
-      if (Array.isArray(data)) {
-        setDropdownOptions((prev) => ({ ...prev, [fieldKey]: data }));
+      const responseData = res.data?.data || res.data;
+
+      // Options can be at .options (countries, id-types) or directly an array
+      const options = responseData?.options || (Array.isArray(responseData) ? responseData : []);
+      if (Array.isArray(options) && options.length > 0) {
+        setDropdownOptions((prev) => ({ ...prev, [fieldKey]: options }));
       }
     } catch {
-      // Options load failed — field will show empty dropdown
+      // Options load failed — try with the countries from our local data as fallback
+      if (fieldKey.toLowerCase().includes("country")) {
+        const { countries } = await import("@/lib/data/countries");
+        setDropdownOptions((prev) => ({
+          ...prev,
+          [fieldKey]: countries.map((c) => ({ key: c.code, label: `${c.flag} ${c.name}` })),
+        }));
+      }
     }
   };
 
@@ -233,10 +256,18 @@ export function CheckoutKycForm({
         onComplete();
       }
     } catch (err) {
-      const msg = axios.isAxiosError(err)
-        ? err.response?.data?.message || err.message
-        : "Failed to process verification";
-      onError(msg);
+      if (axios.isAxiosError(err)) {
+        const errMsg = err.response?.data?.message || err.message;
+        const errors = parseFieldErrors(errMsg);
+        if (Object.keys(errors).length > 0) {
+          setFieldErrors(errors);
+          onError("يرجى تصحيح الحقول المحددة / Please fix the highlighted fields");
+        } else {
+          onError(errMsg);
+        }
+      } else {
+        onError("فشل في معالجة التحقق / Failed to process verification");
+      }
     }
     setSubmitting(false);
   };

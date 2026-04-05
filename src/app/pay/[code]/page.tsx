@@ -560,6 +560,8 @@ function CheckoutContent() {
           <CheckoutKycForm
             provider={provider || "walapay"}
             token={authToken}
+            prefillCountry={legalResidence || selectedCountry}
+            prefillEmail={email}
             onComplete={handleKycFormComplete}
             onError={(msg) => setError(msg)}
           />

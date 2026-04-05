@@ -111,7 +111,7 @@ export default function CashoutPage() {
       loc.toLowerCase().includes(query)
     );
     setLocations(filtered);
-  }, [locationSearch, step, fetchLocations]);
+  }, [locationSearch, step, allLocations]);
 
   // Fetch USDC cashout fee
   const fetchCashoutFee = async () => {

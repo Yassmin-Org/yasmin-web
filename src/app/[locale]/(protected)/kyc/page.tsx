@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { useGetKYCQuery, useCreateDiditSessionMutation } from "@/lib/api/slices/kyc";
+import { useGetAccountStatusQuery, useCreateDiditSessionMutation } from "@/lib/api/slices/kyc";
 import { useAuth } from "@/lib/contexts/auth-context";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,13 +23,13 @@ export default function KYCPage() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const { data: kycData, isLoading, isError: kycError, refetch } = useGetKYCQuery();
+  const { data: kycData, isLoading, isError: kycError, refetch } = useGetAccountStatusQuery() as { data: Record<string, unknown> | undefined; isLoading: boolean; isError: boolean; refetch: () => void };
   const [createSession, { isLoading: creating }] =
     useCreateDiditSessionMutation();
   const [sessionUrl, setSessionUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const kyc = kycData?.data;
+  const kyc = (kycData as Record<string, unknown>)?.data as Record<string, unknown> | undefined;
 
   const handleStartVerification = async () => {
     if (!user) {
@@ -38,7 +38,7 @@ export default function KYCPage() {
     }
     setError(null);
     try {
-      const result = await createSession({ userId: user.id }).unwrap();
+      const result = await createSession({ userId: user.id }).unwrap() as Record<string, unknown>;
       const data = result?.data as Record<string, string> | undefined;
       const url = data?.url || data?.sessionUrl;
       if (url) {
@@ -119,11 +119,11 @@ export default function KYCPage() {
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
           {kycError ? (
             <AlertTriangle className="h-8 w-8 text-yellow-500" />
-          ) : kyc?.status === "APPROVED" || kyc?.isYasminVerified ? (
+          ) : String(kyc?.status || "") === "APPROVED" || !!kyc?.isYasminVerified ? (
             <CheckCircle className="h-8 w-8 text-yasmin" />
-          ) : kyc?.status === "REJECTED" ? (
+          ) : String(kyc?.status || "") === "REJECTED" ? (
             <XCircle className="h-8 w-8 text-red-600" />
-          ) : kyc?.status === "SUBMITTED" || kyc?.status === "PENDING" ? (
+          ) : String(kyc?.status || "") === "SUBMITTED" || String(kyc?.status || "") === "PENDING" ? (
             <Clock className="h-8 w-8 text-yellow-600" />
           ) : (
             <Shield className="h-8 w-8 text-gray-400" />
@@ -135,20 +135,20 @@ export default function KYCPage() {
           <h2 className="text-lg font-semibold text-gray-900">
             {kycError
               ? t("subtitle")
-              : kyc?.status === "APPROVED" || kyc?.isYasminVerified
+              : String(kyc?.status || "") === "APPROVED" || !!kyc?.isYasminVerified
               ? t("approved")
-              : kyc?.status === "REJECTED"
+              : String(kyc?.status || "") === "REJECTED"
               ? t("rejected")
-              : kyc?.status === "SUBMITTED" || kyc?.status === "PENDING"
+              : String(kyc?.status || "") === "SUBMITTED" || String(kyc?.status || "") === "PENDING"
               ? t("underReview")
               : t("subtitle")}
           </h2>
         </div>
 
         {/* Rejection reasons */}
-        {kyc?.status === "REJECTED" && kyc.submissionIssues && (
+        {String(kyc?.status || "") === "REJECTED" && (kyc?.submissionIssues as Array<{reason:string}> | undefined) && (
           <div className="space-y-2 text-left">
-            {kyc.submissionIssues.map((issue, i) => (
+            {((kyc?.submissionIssues as Array<{reason:string}>) || []).map((issue, i) => (
               <div
                 key={i}
                 className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
@@ -175,7 +175,7 @@ export default function KYCPage() {
           loading={creating}
           onClick={handleStartVerification}
         >
-          {kyc?.status === "REJECTED" ? (
+          {String(kyc?.status || "") === "REJECTED" ? (
             <>
               {t("resubmit")} <ExternalLink className="ml-2 h-4 w-4" />
             </>

@@ -63,36 +63,54 @@ export default function CashoutPage() {
 
   const isVerified = user?.walletAddress !== "0x0000000000000000000000000000000000000000";
 
-  // Fetch locations from backend
-  const fetchLocations = useCallback(async (search?: string) => {
+  // All locations cache
+  const [allLocations, setAllLocations] = useState<string[]>([]);
+
+  // Fetch ALL locations from backend (paginated)
+  const fetchAllLocations = useCallback(async () => {
     setLoadingLocations(true);
     try {
-      const url = search
-        ? `${API_URL}/agents/locations/search?query=${encodeURIComponent(search)}`
-        : `${API_URL}/agents/locations?page=1&limit=50`;
-      const res = await axios.get(url);
-      const data = res.data?.data || res.data;
-      setLocations(data?.locations || []);
+      const all: string[] = [];
+      let page = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const res = await axios.get(
+          `${API_URL}/agents/locations?page=${page}&limit=100`
+        );
+        const data = res.data?.data || res.data;
+        const locs = data?.locations || [];
+        all.push(...locs);
+        hasMore = data?.pagination?.hasNextPage || false;
+        page++;
+      }
+      setAllLocations(all);
+      setLocations(all);
     } catch {
+      setAllLocations([]);
       setLocations([]);
     }
     setLoadingLocations(false);
   }, []);
 
-  // Fetch locations when agent form opens
+  // Fetch all locations when agent form opens
   useEffect(() => {
-    if (step === "agent-form") {
-      fetchLocations();
+    if (step === "agent-form" && allLocations.length === 0) {
+      fetchAllLocations();
     }
-  }, [step, fetchLocations]);
+  }, [step, allLocations.length, fetchAllLocations]);
 
-  // Search locations with debounce
+  // Filter locations locally based on search
   useEffect(() => {
     if (step !== "agent-form") return;
-    const timer = setTimeout(() => {
-      fetchLocations(locationSearch || undefined);
-    }, 300);
-    return () => clearTimeout(timer);
+    if (!locationSearch) {
+      setLocations(allLocations);
+      return;
+    }
+    const query = locationSearch.toLowerCase();
+    const filtered = allLocations.filter((loc) =>
+      loc.toLowerCase().includes(query)
+    );
+    setLocations(filtered);
   }, [locationSearch, step, fetchLocations]);
 
   // Fetch USDC cashout fee

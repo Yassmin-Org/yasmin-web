@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AmountInput } from "@/components/ui/amount-input";
@@ -18,6 +18,8 @@ import {
   MapPin,
   Check,
   Shield,
+  Search,
+  ChevronDown,
 } from "lucide-react";
 import axios from "axios";
 
@@ -53,7 +55,45 @@ export default function CashoutPage() {
   const [agentFee, setAgentFee] = useState<number | null>(null);
   const [submittingAgent, setSubmittingAgent] = useState(false);
 
+  // Location search state
+  const [locations, setLocations] = useState<string[]>([]);
+  const [locationSearch, setLocationSearch] = useState("");
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+
   const isVerified = user?.walletAddress !== "0x0000000000000000000000000000000000000000";
+
+  // Fetch locations from backend
+  const fetchLocations = useCallback(async (search?: string) => {
+    setLoadingLocations(true);
+    try {
+      const url = search
+        ? `${API_URL}/agents/locations/search?query=${encodeURIComponent(search)}`
+        : `${API_URL}/agents/locations?page=1&limit=50`;
+      const res = await axios.get(url);
+      const data = res.data?.data || res.data;
+      setLocations(data?.locations || []);
+    } catch {
+      setLocations([]);
+    }
+    setLoadingLocations(false);
+  }, []);
+
+  // Fetch locations when agent form opens
+  useEffect(() => {
+    if (step === "agent-form") {
+      fetchLocations();
+    }
+  }, [step, fetchLocations]);
+
+  // Search locations with debounce
+  useEffect(() => {
+    if (step !== "agent-form") return;
+    const timer = setTimeout(() => {
+      fetchLocations(locationSearch || undefined);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [locationSearch, step, fetchLocations]);
 
   // Fetch USDC cashout fee
   const fetchCashoutFee = async () => {
@@ -337,12 +377,69 @@ export default function CashoutPage() {
             </div>
           </div>
 
-          <Input
-            label="Location"
-            placeholder="Enter your location"
-            value={agentLocation}
-            onChange={(e) => setAgentLocation(e.target.value)}
-          />
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-700">
+              Location
+            </label>
+            <div className="relative">
+              <div
+                onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+                className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm"
+              >
+                <span className={agentLocation ? "text-gray-900" : "text-gray-400"}>
+                  {agentLocation || "Select location"}
+                </span>
+                <ChevronDown className="h-4 w-4 text-gray-400" />
+              </div>
+
+              {showLocationDropdown && (
+                <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                  <div className="sticky top-0 border-b border-gray-100 bg-white p-2">
+                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
+                      <Search className="h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search locations..."
+                        value={locationSearch}
+                        onChange={(e) => setLocationSearch(e.target.value)}
+                        className="w-full bg-transparent text-sm outline-none placeholder:text-gray-400"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {loadingLocations ? (
+                      <div className="flex justify-center py-4">
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+                      </div>
+                    ) : locations.length === 0 ? (
+                      <p className="py-4 text-center text-sm text-gray-400">
+                        No locations found
+                      </p>
+                    ) : (
+                      locations.map((loc) => (
+                        <button
+                          key={loc}
+                          onClick={() => {
+                            setAgentLocation(loc);
+                            setShowLocationDropdown(false);
+                            setLocationSearch("");
+                          }}
+                          className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 ${
+                            agentLocation === loc
+                              ? "bg-green-50 font-medium text-green-700"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {loc}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           <AmountInput
             value={agentAmount}

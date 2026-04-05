@@ -481,23 +481,23 @@ function CheckoutContent() {
     <Card className="w-full max-w-md overflow-hidden p-0">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-        {step !== "landing" ? (
-          <button
-            onClick={() => {
-              setError(null);
-              if (step === "crypto" || step === "fiat-details")
-                setStep("landing");
-              else if (step === "fiat-otp") setStep("fiat-details");
-              else if (step === "fiat-kyc") setStep("landing");
-            }}
-            className="rounded-lg p-1 hover:bg-gray-100"
-          >
-            <ArrowLeft className="h-4 w-4 text-gray-500" />
-          </button>
-        ) : (
-          <div />
-        )}
-        <img src="/brand/logo-green.svg" alt="Yasmin" className="h-6" />
+        <div className="flex items-center gap-2">
+          {step !== "landing" && (
+            <button
+              onClick={() => {
+                setError(null);
+                if (step === "crypto" || step === "fiat-details")
+                  setStep("landing");
+                else if (step === "fiat-otp") setStep("fiat-details");
+                else if (step === "fiat-kyc") setStep("landing");
+              }}
+              className="rounded-lg p-1 hover:bg-gray-100"
+            >
+              <ArrowLeft className="h-4 w-4 text-gray-500" />
+            </button>
+          )}
+          <img src="/brand/logo-green.svg" alt="Yasmin" className="h-6" />
+        </div>
         <LanguageSelector />
       </div>
 

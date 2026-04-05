@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme inline {
+  --color-yasmin: #009854;
+  --color-yasmin-dark: #002e2b;
+  --color-yasmin-light: #00e581;
+}
+
 :root {
   --background: #f9fafb;
   --foreground: #111827;
@@ -14,4 +20,8 @@ body {
 /* RTL support */
 [dir="rtl"] {
   text-align: right;
+}
+
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
 }

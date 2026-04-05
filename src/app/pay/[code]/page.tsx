@@ -425,7 +425,7 @@ function CheckoutContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-yasmin border-t-transparent" />
       </div>
     );
   }
@@ -498,7 +498,7 @@ function CheckoutContent() {
           <div />
         )}
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-green-600">
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-yasmin">
             <span className="text-xs font-bold text-white">Y</span>
           </div>
           <span className="text-sm font-semibold text-gray-700">Yasmin</span>
@@ -547,7 +547,7 @@ function CheckoutContent() {
               {hasWallet && (
                 <button
                   onClick={() => setStep("crypto")}
-                  className="flex w-full items-center gap-4 rounded-xl border-2 border-gray-200 p-4 transition-colors hover:border-green-500 hover:bg-green-50"
+                  className="flex w-full items-center gap-4 rounded-xl border-2 border-gray-200 p-4 transition-colors hover:border-yasmin hover:bg-yasmin/10"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
                     <Wallet className="h-5 w-5 text-purple-600" />
@@ -563,7 +563,7 @@ function CheckoutContent() {
 
               <button
                 onClick={() => setStep("fiat-details")}
-                className="flex w-full items-center gap-4 rounded-xl border-2 border-gray-200 p-4 transition-colors hover:border-green-500 hover:bg-green-50"
+                className="flex w-full items-center gap-4 rounded-xl border-2 border-gray-200 p-4 transition-colors hover:border-yasmin hover:bg-yasmin/10"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
                   <CreditCard className="h-5 w-5 text-blue-600" />
@@ -632,8 +632,8 @@ function CheckoutContent() {
         {/* CRYPTO SUCCESS */}
         {step === "crypto-success" && (
           <div className="space-y-4 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-              <Check className="h-7 w-7 text-green-600" />
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yasmin/15">
+              <Check className="h-7 w-7 text-yasmin" />
             </div>
             <h2 className="text-lg font-semibold text-gray-900">
               Payment Sent!
@@ -641,9 +641,9 @@ function CheckoutContent() {
             <p className="text-sm text-gray-500">
               ${linkData.amount.toFixed(2)} to @{linkData.receiverUsername}
             </p>
-            <Card className="border-green-200 bg-green-50">
+            <Card className="border-yasmin/30 bg-yasmin/10">
               <p className="text-xs text-gray-500">Confirmation Code</p>
-              <p className="text-2xl font-bold text-green-700">
+              <p className="text-2xl font-bold text-yasmin-dark">
                 {confirmationCode}
               </p>
               <p className="mt-1 text-xs text-gray-400">
@@ -775,7 +775,7 @@ function CheckoutContent() {
                   maxLength={1}
                   value={otpCode[i] || ""}
                   autoFocus={i === 0}
-                  className="h-12 w-12 rounded-xl border-2 border-gray-200 bg-white text-center text-xl font-bold text-gray-900 focus:border-green-500 focus:outline-none"
+                  className="h-12 w-12 rounded-xl border-2 border-gray-200 bg-white text-center text-xl font-bold text-gray-900 focus:border-yasmin focus:outline-none"
                   onChange={(e) => {
                     const val = e.target.value.replace(/[^0-9]/g, "");
                     if (!val && !e.target.value) {
@@ -820,7 +820,7 @@ function CheckoutContent() {
             </Button>
 
             <button
-              className="w-full text-center text-sm text-green-600 hover:text-green-700"
+              className="w-full text-center text-sm text-yasmin hover:text-yasmin-dark"
               onClick={async () => {
                 if (authenticated) return; // Already logged in
                 setError(null);
@@ -937,8 +937,8 @@ function CheckoutContent() {
           <div className="space-y-4 text-center">
             <CheckoutProgress currentStep={5} totalSteps={5} />
 
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-              <Check className="h-7 w-7 text-green-600" />
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yasmin/15">
+              <Check className="h-7 w-7 text-yasmin" />
             </div>
             <h2 className="text-lg font-semibold text-gray-900">
               Payment Sent!
@@ -947,9 +947,9 @@ function CheckoutContent() {
               ${linkData.amount.toFixed(2)} to @{linkData.receiverUsername}
             </p>
 
-            <Card className="border-green-200 bg-green-50">
+            <Card className="border-yasmin/30 bg-yasmin/10">
               <p className="text-xs text-gray-500">Confirmation Code</p>
-              <p className="text-2xl font-bold text-green-700">
+              <p className="text-2xl font-bold text-yasmin-dark">
                 {confirmationCode}
               </p>
               <p className="mt-1 text-xs text-gray-400">

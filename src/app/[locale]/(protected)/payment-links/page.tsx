@@ -95,7 +95,7 @@ export default function PaymentLinksPage() {
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       status === "active"
-                        ? "bg-green-100 text-green-700"
+                        ? "bg-yasmin/15 text-yasmin-dark"
                         : status === "paid"
                         ? "bg-blue-100 text-blue-700"
                         : status === "expired"

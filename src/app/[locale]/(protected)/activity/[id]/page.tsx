@@ -52,7 +52,7 @@ export default function ActivityDetailPage() {
   if (isLoading || !activity) {
     return (
       <div className="flex justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-yasmin border-t-transparent" />
       </div>
     );
   }
@@ -121,7 +121,7 @@ export default function ActivityDetailPage() {
           className={`text-3xl font-bold ${
             isSender && activity.type === "TRANSACTION"
               ? "text-red-600"
-              : "text-green-600"
+              : "text-yasmin"
           }`}
         >
           {isSender && activity.type === "TRANSACTION" ? "-" : ""}$
@@ -146,7 +146,7 @@ export default function ActivityDetailPage() {
             <span
               className={`font-medium ${
                 activity.isFulfilled
-                  ? "text-green-600"
+                  ? "text-yasmin"
                   : activity.isCancelled
                   ? "text-red-600"
                   : isExpired

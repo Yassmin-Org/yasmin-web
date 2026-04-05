@@ -20,8 +20,13 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <NextIntlClientProvider messages={messages}>
-      <Providers>{children}</Providers>
-    </NextIntlClientProvider>
+    <div
+      dir={locale === "ar" ? "rtl" : "ltr"}
+      className={locale === "ar" ? "font-[var(--font-arabic)]" : ""}
+    >
+      <NextIntlClientProvider messages={messages}>
+        <Providers>{children}</Providers>
+      </NextIntlClientProvider>
+    </div>
   );
 }

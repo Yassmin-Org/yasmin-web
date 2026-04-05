@@ -18,7 +18,7 @@ export function CheckoutProgress({
           key={i}
           className={cn(
             "h-1.5 flex-1 rounded-full transition-colors",
-            i < currentStep ? "bg-green-500" : "bg-gray-200"
+            i < currentStep ? "bg-yasmin/100" : "bg-gray-200"
           )}
         />
       ))}

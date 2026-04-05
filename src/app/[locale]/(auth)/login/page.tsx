@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <div className="space-y-8 text-center">
       <div className="space-y-2">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-600">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-yasmin">
           <span className="text-2xl font-bold text-white">Y</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">{t("loginTitle")}</h1>

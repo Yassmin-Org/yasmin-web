@@ -40,7 +40,7 @@ export default function ProfilePage() {
 
       {/* User Info */}
       <Card className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-xl font-bold text-green-600">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yasmin/15 text-xl font-bold text-yasmin">
           {user.username.charAt(0).toUpperCase()}
         </div>
         <div>
@@ -68,7 +68,7 @@ export default function ProfilePage() {
             className="rounded p-1 hover:bg-gray-100"
           >
             {copied ? (
-              <Check className="h-4 w-4 text-green-600" />
+              <Check className="h-4 w-4 text-yasmin" />
             ) : (
               <Copy className="h-4 w-4 text-gray-400" />
             )}

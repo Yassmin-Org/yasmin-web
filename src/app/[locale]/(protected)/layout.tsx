@@ -36,7 +36,7 @@ export default function ProtectedLayout({
   if (isLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-yasmin border-t-transparent" />
       </div>
     );
   }
@@ -46,7 +46,10 @@ export default function ProtectedLayout({
       {/* Top nav */}
       <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
-          <span className="text-lg font-bold text-green-600">Yasmin</span>
+          <div className="flex items-center gap-2">
+            <img src="/logo.svg" alt="Yasmin" className="h-6 w-6" />
+            <span className="text-lg font-bold text-yasmin-dark">Yasmin</span>
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">
               @{user?.username}
@@ -91,7 +94,7 @@ function NavItem({
   return (
     <Link
       href={href}
-      className="flex flex-col items-center gap-0.5 px-2 py-1 text-gray-400 transition-colors hover:text-green-600"
+      className="flex flex-col items-center gap-0.5 px-2 py-1 text-gray-400 transition-colors hover:text-yasmin"
     >
       <Icon className="h-5 w-5" />
       <span className="text-[10px] font-medium">{label}</span>

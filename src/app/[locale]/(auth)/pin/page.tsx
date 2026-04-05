@@ -25,7 +25,7 @@ export default function PinLockPage() {
     <div className="flex min-h-screen flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-8 text-center">
         <div className="space-y-2">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-600">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-yasmin">
             <span className="text-2xl font-bold text-white">Y</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>

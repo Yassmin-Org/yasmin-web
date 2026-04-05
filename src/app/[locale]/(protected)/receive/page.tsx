@@ -133,8 +133,8 @@ export default function ReceivePage() {
       {step === "success" && (
         <div className="space-y-6 text-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-              <Check className="h-7 w-7 text-green-600" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-yasmin/15">
+              <Check className="h-7 w-7 text-yasmin" />
             </div>
             <p className="text-sm text-gray-500">{t("success")}</p>
           </div>

@@ -37,7 +37,7 @@ export default function ActivityPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-12">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-yasmin border-t-transparent" />
         </div>
       ) : activities.length === 0 ? (
         <div className="py-12 text-center text-sm text-gray-400">
@@ -67,7 +67,7 @@ export default function ActivityPage() {
                         ? "bg-red-50 text-red-600"
                         : isPending
                         ? "bg-yellow-50 text-yellow-600"
-                        : "bg-green-50 text-green-600"
+                        : "bg-yasmin/10 text-yasmin"
                     }`}
                   >
                     {isSent ? "-" : isPending ? "?" : "+"}
@@ -95,7 +95,7 @@ export default function ActivityPage() {
                 </div>
                 <span
                   className={`text-sm font-semibold ${
-                    isSent ? "text-red-600" : "text-green-600"
+                    isSent ? "text-red-600" : "text-yasmin"
                   }`}
                 >
                   {isSent ? "-" : "+"}${activity.value.toFixed(2)}

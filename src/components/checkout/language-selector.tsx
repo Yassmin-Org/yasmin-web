@@ -48,7 +48,7 @@ export function LanguageSelector({ onChange }: LanguageSelectorProps) {
               }}
               className={`flex w-full items-center px-3 py-1.5 text-sm hover:bg-gray-50 ${
                 selected === lang.code
-                  ? "font-medium text-green-600"
+                  ? "font-medium text-yasmin"
                   : "text-gray-700"
               }`}
             >

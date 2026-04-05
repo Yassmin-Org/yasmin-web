@@ -19,11 +19,11 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Balance Card */}
-      <Card className="bg-gradient-to-br from-green-600 to-green-700 text-white">
-        <p className="text-sm font-medium text-green-100">{t("balance")}</p>
+      <Card className="bg-gradient-to-br from-yasmin to-yasmin-dark text-white">
+        <p className="text-sm font-medium text-white/80">{t("balance")}</p>
         <p className="mt-1 text-3xl font-bold">${formattedBalance}</p>
         {user && (
-          <p className="mt-2 text-xs text-green-200">
+          <p className="mt-2 text-xs text-white/70">
             {t("flowers")}: {user.points}
           </p>
         )}
@@ -35,8 +35,8 @@ export default function DashboardPage() {
           href="/payment-links/create"
           className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-            <LinkIcon className="h-5 w-5 text-green-600" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yasmin/15">
+            <LinkIcon className="h-5 w-5 text-yasmin" />
           </div>
           <span className="text-xs font-medium text-gray-700">
             Payment Link
@@ -61,7 +61,7 @@ export default function DashboardPage() {
           </h2>
           <Link
             href="/activity"
-            className="flex items-center text-xs text-green-600 hover:text-green-700"
+            className="flex items-center text-xs text-yasmin hover:text-yasmin-dark"
           >
             {t("viewAll")} <ChevronRight className="h-3 w-3" />
           </Link>
@@ -113,7 +113,7 @@ function ActivityRow({
               ? "bg-red-50 text-red-600"
               : isPending
               ? "bg-yellow-50 text-yellow-600"
-              : "bg-green-50 text-green-600"
+              : "bg-yasmin/10 text-yasmin"
           }`}
         >
           {isSent ? "-" : isPending ? "?" : "+"}
@@ -129,7 +129,7 @@ function ActivityRow({
       </div>
       <span
         className={`text-sm font-semibold ${
-          isSent ? "text-red-600" : "text-green-600"
+          isSent ? "text-red-600" : "text-yasmin"
         }`}
       >
         {isSent ? "-" : "+"}${activity.value.toFixed(2)}

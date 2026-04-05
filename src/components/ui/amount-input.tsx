@@ -47,7 +47,7 @@ export function AmountInput({
       <div
         className={cn(
           "flex items-center justify-center gap-2 rounded-2xl border-2 bg-white px-6 py-8 transition-colors",
-          error ? "border-red-300" : "border-gray-200 focus-within:border-green-500"
+          error ? "border-red-300" : "border-gray-200 focus-within:border-yasmin"
         )}
         onClick={() => inputRef.current?.focus()}
       >

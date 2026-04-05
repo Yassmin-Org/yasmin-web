@@ -212,7 +212,7 @@ export default function CashoutPage() {
               fetchCashoutFee();
               setStep("crypto-form");
             }}
-            className="flex w-full items-center gap-4 rounded-2xl border-2 border-gray-200 bg-white p-5 text-left transition-colors hover:border-green-500 hover:bg-green-50"
+            className="flex w-full items-center gap-4 rounded-2xl border-2 border-gray-200 bg-white p-5 text-left transition-colors hover:border-yasmin hover:bg-yasmin/10"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100">
               <Wallet className="h-6 w-6 text-purple-600" />
@@ -233,10 +233,10 @@ export default function CashoutPage() {
               }
               setStep("agent-form");
             }}
-            className="flex w-full items-center gap-4 rounded-2xl border-2 border-gray-200 bg-white p-5 text-left transition-colors hover:border-green-500 hover:bg-green-50"
+            className="flex w-full items-center gap-4 rounded-2xl border-2 border-gray-200 bg-white p-5 text-left transition-colors hover:border-yasmin hover:bg-yasmin/10"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100">
-              <MapPin className="h-6 w-6 text-green-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-yasmin/15">
+              <MapPin className="h-6 w-6 text-yasmin" />
             </div>
             <div>
               <p className="font-semibold text-gray-900">Cash Out via Agent</p>
@@ -327,8 +327,8 @@ export default function CashoutPage() {
       {/* CRYPTO SUCCESS */}
       {step === "crypto-success" && (
         <div className="space-y-4 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-            <Check className="h-7 w-7 text-green-600" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yasmin/15">
+            <Check className="h-7 w-7 text-yasmin" />
           </div>
           <h2 className="text-lg font-semibold text-gray-900">
             Withdrawal Submitted!
@@ -390,7 +390,7 @@ export default function CashoutPage() {
                 onChange={(e) =>
                   setPhoneNumber(e.target.value.replace(/[^0-9]/g, "").slice(0, 10))
                 }
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-yasmin focus:outline-none focus:ring-2 focus:ring-yasmin"
               />
             </div>
           </div>
@@ -428,7 +428,7 @@ export default function CashoutPage() {
                   <div className="max-h-48 overflow-y-auto">
                     {loadingLocations ? (
                       <div className="flex justify-center py-4">
-                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-yasmin border-t-transparent" />
                       </div>
                     ) : locations.length === 0 ? (
                       <p className="py-4 text-center text-sm text-gray-400">
@@ -445,7 +445,7 @@ export default function CashoutPage() {
                           }}
                           className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 ${
                             agentLocation === loc
-                              ? "bg-green-50 font-medium text-green-700"
+                              ? "bg-yasmin/10 font-medium text-yasmin-dark"
                               : "text-gray-700"
                           }`}
                         >
@@ -510,8 +510,8 @@ export default function CashoutPage() {
       {/* AGENT SUCCESS */}
       {step === "agent-success" && (
         <div className="space-y-4 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-            <Check className="h-7 w-7 text-green-600" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yasmin/15">
+            <Check className="h-7 w-7 text-yasmin" />
           </div>
           <h2 className="text-lg font-semibold text-gray-900">
             Request Submitted!

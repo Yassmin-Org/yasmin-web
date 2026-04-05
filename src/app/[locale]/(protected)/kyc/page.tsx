@@ -59,7 +59,7 @@ export default function KYCPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-green-600 border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-yasmin border-t-transparent" />
       </div>
     );
   }
@@ -120,7 +120,7 @@ export default function KYCPage() {
           {kycError ? (
             <AlertTriangle className="h-8 w-8 text-yellow-500" />
           ) : kyc?.status === "APPROVED" || kyc?.isYasminVerified ? (
-            <CheckCircle className="h-8 w-8 text-green-600" />
+            <CheckCircle className="h-8 w-8 text-yasmin" />
           ) : kyc?.status === "REJECTED" ? (
             <XCircle className="h-8 w-8 text-red-600" />
           ) : kyc?.status === "SUBMITTED" || kyc?.status === "PENDING" ? (

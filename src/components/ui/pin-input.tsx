@@ -55,8 +55,8 @@ export function PinInput({ length = 4, onComplete, error }: PinInputProps) {
             onChange={(e) => handleChange(index, e.target.value)}
             onKeyDown={(e) => handleKeyDown(index, e)}
             className={cn(
-              "h-14 w-14 rounded-xl border-2 bg-white text-center text-2xl font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-green-500",
-              error ? "border-red-300" : value ? "border-green-500" : "border-gray-200"
+              "h-14 w-14 rounded-xl border-2 bg-white text-center text-2xl font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-yasmin",
+              error ? "border-red-300" : value ? "border-yasmin" : "border-gray-200"
             )}
           />
         ))}

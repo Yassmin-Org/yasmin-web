@@ -70,7 +70,7 @@ export default function RegisterStep1() {
           {isValid && isAvailable !== null && (
             <div className="absolute right-3 top-3">
               {isAvailable ? (
-                <Check className="h-5 w-5 text-green-600" />
+                <Check className="h-5 w-5 text-yasmin" />
               ) : (
                 <X className="h-5 w-5 text-red-500" />
               )}
@@ -79,7 +79,7 @@ export default function RegisterStep1() {
         </div>
 
         {isAvailable && (
-          <p className="text-sm text-green-600">{t("usernameAvailable")}</p>
+          <p className="text-sm text-yasmin">{t("usernameAvailable")}</p>
         )}
 
         <Button

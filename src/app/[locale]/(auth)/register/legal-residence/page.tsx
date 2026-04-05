@@ -46,7 +46,7 @@ export default function LegalResidencePage() {
             onClick={() => toggleCountry(country.code)}
             className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition-colors ${
               selected.includes(country.code)
-                ? "bg-green-50 text-green-700"
+                ? "bg-yasmin/10 text-yasmin-dark"
                 : "hover:bg-gray-50"
             }`}
           >
@@ -55,7 +55,7 @@ export default function LegalResidencePage() {
               <span className="text-sm font-medium">{country.name}</span>
             </span>
             {selected.includes(country.code) && (
-              <Check className="h-4 w-4 text-green-600" />
+              <Check className="h-4 w-4 text-yasmin" />
             )}
           </button>
         ))}

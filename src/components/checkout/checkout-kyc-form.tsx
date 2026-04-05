@@ -218,13 +218,24 @@ export function CheckoutKycForm({
       setAllSubmittedData(merged);
 
       // Get next step via navigation
-      const navRes = await axios.post(
-        `${API_URL}/kyc/navigation`,
-        { currentFlow, ...merged },
-        { headers }
-      );
-      const navData = navRes.data?.data || navRes.data;
-      const nextFlow = navData?.nextFlow;
+      let nextFlow: string | null = null;
+      try {
+        const navRes = await axios.post(
+          `${API_URL}/kyc/navigation`,
+          { currentFlow, ...merged },
+          { headers }
+        );
+        const navData = navRes.data?.data || navRes.data;
+        nextFlow = navData?.nextFlow || null;
+      } catch (navErr) {
+        // Navigation failed — try submitting what we have
+        const navMsg = axios.isAxiosError(navErr)
+          ? navErr.response?.data?.message || navErr.message
+          : "Navigation failed";
+        console.error("KYC navigation error:", navMsg);
+        // If navigation fails, assume we're at the last step and submit
+        nextFlow = null;
+      }
 
       if (nextFlow) {
         // More steps to fill — don't submit to provider yet
@@ -255,18 +266,22 @@ export function CheckoutKycForm({
         }
         onComplete();
       }
-    } catch (err) {
+    } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
-        const errMsg = err.response?.data?.message || err.message;
+        const errData = err.response?.data;
+        const errMsg = errData?.message || err.message;
+        // Show full backend error for debugging
+        const fullError = typeof errData === "object" ? JSON.stringify(errData) : errMsg;
         const errors = parseFieldErrors(errMsg);
         if (Object.keys(errors).length > 0) {
           setFieldErrors(errors);
           onError("يرجى تصحيح الحقول المحددة / Please fix the highlighted fields");
         } else {
-          onError(errMsg);
+          onError(errMsg || fullError);
         }
       } else {
-        onError("فشل في معالجة التحقق / Failed to process verification");
+        const msg = err instanceof Error ? err.message : String(err);
+        onError(msg || "فشل في معالجة التحقق / Failed to process verification");
       }
     }
     setSubmitting(false);

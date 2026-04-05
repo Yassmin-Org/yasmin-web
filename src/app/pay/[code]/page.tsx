@@ -229,6 +229,7 @@ function CheckoutContent() {
           isAgent: false,
           email,
           phoneNumber: phone.replace(/[^0-9]/g, "") || undefined,
+          countryCode: phone ? selectedCountry : undefined,
           citizenship: [citizenship],
           legalResidence: [legalResidence],
           preferredLanguage: "en",

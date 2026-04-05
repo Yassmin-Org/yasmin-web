@@ -191,7 +191,16 @@ export function CheckoutKycForm({
       const prefix = provider === "bridge" ? "bridge" : "walapay";
 
       // Submit form data for this step
-      await axios.post(`${API_URL}/${prefix}/kyc`, formValues, { headers });
+      try {
+        await axios.post(`${API_URL}/${prefix}/kyc`, formValues, { headers });
+      } catch (submitErr) {
+        const msg = axios.isAxiosError(submitErr)
+          ? submitErr.response?.data?.message || submitErr.message
+          : "Failed to submit data";
+        onError(msg);
+        setSubmitting(false);
+        return;
+      }
 
       // Merge with all submitted data
       const merged = { ...allSubmittedData, ...formValues };
@@ -307,12 +316,12 @@ function DynamicField({
   dropdownOptions?: Array<{ key: string; label: string }>;
   allValues: Record<string, unknown>;
 }) {
-  // Check conditional visibility
+  // Check conditional visibility — hide field if condition not met
   for (const validation of field.validations) {
-    if (validation.condition) {
+    if (validation.key === "requiredWhen" && validation.condition) {
       const depValue = allValues[validation.condition.field];
-      if (depValue !== validation.condition.equals) {
-        // Condition not met — could hide or skip
+      if (String(depValue) !== validation.condition.equals) {
+        return null; // Hide this field
       }
     }
   }

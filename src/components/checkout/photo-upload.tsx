@@ -21,6 +21,7 @@ export function PhotoUpload({
 }: PhotoUploadProps) {
   const [preview, setPreview] = useState<string | null>(value || null);
   const [isDragging, setIsDragging] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,9 +29,10 @@ export function PhotoUpload({
     (file: File) => {
       if (!file.type.startsWith("image/")) return;
       if (file.size > 10 * 1024 * 1024) {
-        alert("File too large. Maximum 10MB.");
+        setFileError("File too large. Maximum 10MB.");
         return;
       }
+      setFileError(null);
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -132,9 +134,11 @@ export function PhotoUpload({
             </button>
           </div>
 
-          <p className="text-[10px] text-gray-400">
-            JPG, PNG up to 10MB
-          </p>
+          {fileError ? (
+            <p className="text-[10px] text-red-500">{fileError}</p>
+          ) : (
+            <p className="text-[10px] text-gray-400">JPG, PNG up to 10MB</p>
+          )}
         </div>
       )}
 

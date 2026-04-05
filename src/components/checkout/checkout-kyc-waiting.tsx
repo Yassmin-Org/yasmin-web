@@ -69,6 +69,21 @@ export function CheckoutKycWaiting({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  // Save state immediately so return visits work even if user closes browser early
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        `yasmin_checkout_${paymentCode}`,
+        JSON.stringify({
+          code: paymentCode,
+          step: "kyc-waiting",
+          provider,
+          timestamp: Date.now(),
+        })
+      );
+    }
+  }, [paymentCode, provider]);
+
   // Polling loop
   useEffect(() => {
     if (!polling) return;
@@ -79,18 +94,6 @@ export function CheckoutKycWaiting({
         if (next >= MAX_POLL_TIME) {
           setPolling(false);
           setStatus("timeout");
-          // Save state for return visit
-          if (typeof window !== "undefined") {
-            localStorage.setItem(
-              `yasmin_checkout_${paymentCode}`,
-              JSON.stringify({
-                code: paymentCode,
-                step: "kyc-waiting",
-                provider,
-                timestamp: Date.now(),
-              })
-            );
-          }
           return next;
         }
         return next;

@@ -24,15 +24,19 @@ export const bridgeApi = createApi({
 
     getBridgeKycLink: builder.query<unknown, void>({
       query: () => ({
-        url: "/bridge/kyc-link",
+        url: "/bridge/kyc/kyc-link",
       }),
       providesTags: ["Bridge"],
     }),
 
-    createBridgeKycLink: builder.mutation<unknown, void>({
-      query: () => ({
-        url: "/bridge/kyc-link",
+    createBridgeKycLink: builder.mutation<
+      unknown,
+      { first_name?: string; last_name?: string; email?: string }
+    >({
+      query: (data) => ({
+        url: "/bridge/kyc/kyc-link",
         method: "POST",
+        body: data,
       }),
     }),
 

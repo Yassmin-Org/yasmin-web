@@ -29,3 +29,4 @@ export function truncateAddress(address: string, chars = 6): string {
 export function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text);
 }
+// vercel rebuild 1775355037

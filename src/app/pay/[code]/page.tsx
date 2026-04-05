@@ -549,14 +549,15 @@ function CheckoutContent() {
                   onClick={() => setStep("crypto")}
                   className="flex w-full items-center gap-4 rounded-xl border-2 border-gray-200 p-4 transition-colors hover:border-yasmin hover:bg-yasmin/10"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                    <Wallet className="h-5 w-5 text-purple-600" />
+                  <div className="flex items-center gap-1.5">
+                    <img src="/icons/usdc.svg" alt="USDC" className="h-10 w-10 rounded-lg" />
+                    <img src="/icons/base.svg" alt="Base" className="h-10 w-10 rounded-lg" />
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-semibold text-gray-900">
                       Pay with Crypto
                     </p>
-                    <p className="text-xs text-gray-500">Send USDC on Base</p>
+                    <p className="text-xs text-gray-500">USDC on Base Network</p>
                   </div>
                 </button>
               )}
@@ -565,15 +566,16 @@ function CheckoutContent() {
                 onClick={() => setStep("fiat-details")}
                 className="flex w-full items-center gap-4 rounded-xl border-2 border-gray-200 p-4 transition-colors hover:border-yasmin hover:bg-yasmin/10"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                  <CreditCard className="h-5 w-5 text-blue-600" />
+                <div className="flex items-center gap-1.5">
+                  <img src="/icons/sepa.svg" alt="SEPA" className="h-10 w-10 rounded-lg" />
+                  <img src="/icons/ach.svg" alt="ACH" className="h-10 w-10 rounded-lg" />
                 </div>
                 <div className="text-left">
                   <p className="text-sm font-semibold text-gray-900">
-                    Pay with Card / Bank
+                    Pay with Bank Transfer
                   </p>
                   <p className="text-xs text-gray-500">
-                    Visa, Mastercard, Bank Transfer
+                    SEPA, ACH, Wire Transfer
                   </p>
                 </div>
               </button>

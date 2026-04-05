@@ -1,0 +1,16 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="32" height="32" rx="6" fill="#003399"/>
+<text x="16" y="18" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#FFD700">S€PA</text>
+<circle cx="16" cy="10" r="1.2" fill="#FFD700"/>
+<circle cx="12.5" cy="10.8" r="1.2" fill="#FFD700"/>
+<circle cx="19.5" cy="10.8" r="1.2" fill="#FFD700"/>
+<circle cx="11" cy="13.5" r="1.2" fill="#FFD700"/>
+<circle cx="21" cy="13.5" r="1.2" fill="#FFD700"/>
+<circle cx="11" cy="16.5" r="1.2" fill="#FFD700"/>
+<circle cx="21" cy="16.5" r="1.2" fill="#FFD700"/>
+<circle cx="12.5" cy="19.2" r="1.2" fill="#FFD700"/>
+<circle cx="19.5" cy="19.2" r="1.2" fill="#FFD700"/>
+<circle cx="14" cy="20.5" r="1.2" fill="#FFD700"/>
+<circle cx="18" cy="20.5" r="1.2" fill="#FFD700"/>
+<circle cx="16" cy="21" r="1.2" fill="#FFD700"/>
+</svg>

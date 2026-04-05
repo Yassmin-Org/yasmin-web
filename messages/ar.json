@@ -70,7 +70,10 @@
     "deposit": "إيداع",
     "viewAll": "عرض الكل",
     "noActivity": "لا يوجد نشاط حديث",
-    "flowers": "زهور ياسمين"
+    "flowers": "زهور ياسمين",
+    "paymentLink": "رابط دفع",
+    "cashOut": "سحب",
+    "activity": "النشاط"
   },
   "send": {
     "title": "إرسال الأموال",

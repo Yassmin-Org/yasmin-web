@@ -12,7 +12,9 @@ import {
   Landmark,
   LinkIcon,
   ArrowUpFromLine,
+  Globe,
 } from "lucide-react";
+import { useLocale } from "next-intl";
 
 export default function ProtectedLayout({
   children,
@@ -22,6 +24,13 @@ export default function ProtectedLayout({
   const { isAuthenticated, isLoading, needsPin, logout, user } = useAuth();
   const router = useRouter();
   const t = useTranslations("dashboard");
+  const locale = useLocale();
+
+  const switchLanguage = () => {
+    const newLocale = locale === "en" ? "ar" : "en";
+    localStorage.setItem("selected_language", newLocale);
+    window.location.href = `/${newLocale}/dashboard`;
+  };
 
   useEffect(() => {
     if (!isLoading) {
@@ -47,10 +56,16 @@ export default function ProtectedLayout({
       <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
           <img src="/brand/logo-green.svg" alt="Yasmin" className="h-7" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500">
               @{user?.username}
             </span>
+            <button
+              onClick={switchLanguage}
+              className="rounded-lg px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+            >
+              {locale === "en" ? "عربي" : "EN"}
+            </button>
             <button
               onClick={logout}
               className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
@@ -70,9 +85,9 @@ export default function ProtectedLayout({
       <nav className="sticky bottom-0 z-30 border-t border-gray-100 bg-white">
         <div className="mx-auto flex max-w-lg items-center justify-around py-2">
           <NavItem href="/dashboard" icon={Home} label={t("title")} />
-          <NavItem href="/payment-links/create" icon={LinkIcon} label="Payment Link" />
-          <NavItem href="/deposit" icon={Landmark} label="Cash Out" />
-          <NavItem href="/activity" icon={Clock} label="Activity" />
+          <NavItem href="/payment-links/create" icon={LinkIcon} label={t("paymentLink")} />
+          <NavItem href="/deposit" icon={Landmark} label={t("cashOut")} />
+          <NavItem href="/activity" icon={Clock} label={t("activity")} />
         </div>
       </nav>
     </div>

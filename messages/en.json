@@ -70,7 +70,10 @@
     "deposit": "Deposit",
     "viewAll": "View All",
     "noActivity": "No recent activity",
-    "flowers": "Yasmin Flowers"
+    "flowers": "Yasmin Flowers",
+    "paymentLink": "Payment Link",
+    "cashOut": "Cash Out",
+    "activity": "Activity"
   },
   "send": {
     "title": "Send Money",

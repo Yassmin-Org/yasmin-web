@@ -224,12 +224,24 @@ function CheckoutContent() {
         const suffix = Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4);
         const username = `${prefix}${suffix}`.slice(0, 20);
 
+        // Only include phone if user provided one, and format properly
+        const cleanPhone = phone.replace(/[^0-9]/g, "");
+        const phoneData: Record<string, string> = {};
+        if (cleanPhone) {
+          // Find the dial code for the selected country
+          const countryData = (await import("@/lib/data/countries")).countries.find(
+            (c) => c.code === selectedCountry
+          );
+          const dialCode = countryData?.dialCode?.replace("+", "") || "";
+          phoneData.phoneNumber = cleanPhone;
+          phoneData.countryCode = dialCode;
+        }
+
         await axios.post(`${API_URL}/users`, {
           username,
           isAgent: false,
           email,
-          phoneNumber: phone.replace(/[^0-9]/g, "") || undefined,
-          countryCode: phone ? selectedCountry : undefined,
+          ...phoneData,
           citizenship: [citizenship],
           legalResidence: [legalResidence],
           preferredLanguage: "en",
@@ -533,7 +545,21 @@ function CheckoutContent() {
             <Button size="lg" className="w-full" disabled={otpCode.length < 6} loading={creatingUser} onClick={handleVerifyOtp}>
               {creatingUser ? "Setting up..." : "Verify"}
             </Button>
-            <button className="w-full text-center text-sm text-yasmin hover:text-yasmin-dark" onClick={async () => { if (authenticated) return; try { await sendCode({ email }); } catch { setError("Failed to resend code."); } }}>Resend code</button>
+            <button className="w-full text-center text-sm text-yasmin hover:text-yasmin-dark" onClick={async () => {
+              if (authenticated) return;
+              setError(null);
+              try {
+                await sendCode({ email });
+                setError(null);
+              } catch (err) {
+                const msg = err instanceof Error ? err.message : "Failed to resend code.";
+                if (msg.includes("already") || msg.includes("linked")) {
+                  setError("This email already has an account. The code should still work — check your inbox.");
+                } else {
+                  setError(msg);
+                }
+              }
+            }}>Resend code</button>
           </div>
         )}
 

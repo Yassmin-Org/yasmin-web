@@ -71,7 +71,6 @@ function CheckoutContent() {
 
   // Fiat state
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
   const [citizenship, setCitizenship] = useState("");
   const [legalResidence, setLegalResidence] = useState("");
@@ -224,24 +223,10 @@ function CheckoutContent() {
         const suffix = Math.random().toString(36).replace(/[^a-z0-9]/g, "").slice(0, 4);
         const username = `${prefix}${suffix}`.slice(0, 20);
 
-        // Only include phone if user provided one, and format properly
-        const cleanPhone = phone.replace(/[^0-9]/g, "");
-        const phoneData: Record<string, string> = {};
-        if (cleanPhone) {
-          // Find the dial code for the selected country
-          const countryData = (await import("@/lib/data/countries")).countries.find(
-            (c) => c.code === selectedCountry
-          );
-          const dialCode = countryData?.dialCode?.replace("+", "") || "";
-          phoneData.phoneNumber = cleanPhone;
-          phoneData.countryCode = dialCode;
-        }
-
         await axios.post(`${API_URL}/users`, {
           username,
           isAgent: false,
           email,
-          ...phoneData,
           citizenship: [citizenship],
           legalResidence: [legalResidence],
           preferredLanguage: "en",
@@ -295,7 +280,7 @@ function CheckoutContent() {
       setError(msg);
     }
     setCreatingUser(false);
-  }, [authenticated, creatingUser, userCreated, email, phone, citizenship, legalResidence, getAccessToken]);
+  }, [authenticated, creatingUser, userCreated, email, citizenship, legalResidence, getAccessToken]);
 
   const handleCopyAddress = async () => {
     if (linkData?.receiverWalletAddress) {
@@ -489,7 +474,6 @@ function CheckoutContent() {
             <CheckoutProgress currentStep={1} totalSteps={5} />
             <h2 className="text-lg font-semibold text-gray-900">Your Details</h2>
             <Input label="Email" type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <Input label="Phone (optional)" type="tel" placeholder="+1234567890" value={phone} onChange={(e) => setPhone(e.target.value)} />
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-gray-700">Country</label>
               <select value={selectedCountry} onChange={(e) => setSelectedCountry(e.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm">

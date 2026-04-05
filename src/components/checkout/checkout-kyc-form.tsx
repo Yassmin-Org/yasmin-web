@@ -456,26 +456,15 @@ function DynamicField({
     case "DROPDOWN":
     case "COUNTRY":
       return (
-        <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-gray-700">
-            {field.label}
-          </label>
-          <select
-            value={(value as string) || ""}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:border-yasmin focus:outline-none focus:ring-2 focus:ring-yasmin"
-          >
-            <option value="">{field.placeholder || "Select..."}</option>
-            {(dropdownOptions || []).map((opt) => (
-              <option key={opt.key} value={opt.key}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {field.infoText && (
-            <p className="text-xs text-gray-500">{field.infoText}</p>
-          )}
-        </div>
+        <SearchableDropdown
+          label={field.label}
+          placeholder={field.placeholder || "Select..."}
+          options={dropdownOptions || []}
+          value={(value as string) || ""}
+          onChange={(val) => onChange(val)}
+          infoText={field.infoText}
+          error={error}
+        />
       );
 
     case "YES_NO":
@@ -551,4 +540,98 @@ function DynamicField({
         />
       );
   }
+}
+
+// Searchable dropdown component for COUNTRY and DROPDOWN fields
+function SearchableDropdown({
+  label,
+  placeholder,
+  options,
+  value,
+  onChange,
+  infoText,
+  error,
+}: {
+  label: string;
+  placeholder: string;
+  options: Array<{ key: string; label: string }>;
+  value: string;
+  onChange: (val: string) => void;
+  infoText?: string;
+  error?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = search
+    ? options.filter((o) =>
+        o.label.toLowerCase().includes(search.toLowerCase()) ||
+        o.key.toLowerCase().includes(search.toLowerCase())
+      )
+    : options;
+
+  const selectedLabel = options.find((o) => o.key === value)?.label;
+
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className={`flex w-full items-center justify-between rounded-xl border bg-white px-4 py-3 text-sm text-left ${
+            error ? "border-red-300" : "border-gray-200"
+          }`}
+        >
+          <span className={selectedLabel ? "text-gray-900" : "text-gray-400"}>
+            {selectedLabel || placeholder}
+          </span>
+          <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {open && (
+          <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+            <div className="sticky top-0 border-b border-gray-100 bg-white p-2">
+              <input
+                type="text"
+                placeholder="Search..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg bg-gray-50 px-3 py-2 text-sm outline-none placeholder:text-gray-400"
+                autoFocus
+              />
+            </div>
+            <div className="max-h-44 overflow-y-auto">
+              {filtered.length === 0 ? (
+                <p className="py-3 text-center text-sm text-gray-400">No results</p>
+              ) : (
+                filtered.map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => {
+                      onChange(opt.key);
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                    className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 ${
+                      value === opt.key
+                        ? "bg-yasmin/10 font-medium text-yasmin-dark"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      {error && <p className="text-xs text-red-600">{error}</p>}
+      {infoText && !error && <p className="text-xs text-gray-500">{infoText}</p>}
+    </div>
+  );
 }

@@ -1,0 +1,50 @@
+<svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg" opacity="0.06">
+  <!-- Globe circle -->
+  <circle cx="400" cy="400" r="280" stroke="#009854" stroke-width="1"/>
+  <!-- Latitude lines -->
+  <ellipse cx="400" cy="400" rx="280" ry="80" stroke="#009854" stroke-width="0.7"/>
+  <ellipse cx="400" cy="400" rx="280" ry="160" stroke="#009854" stroke-width="0.7"/>
+  <ellipse cx="400" cy="400" rx="280" ry="240" stroke="#009854" stroke-width="0.7"/>
+  <!-- Longitude lines -->
+  <ellipse cx="400" cy="400" rx="80" ry="280" stroke="#009854" stroke-width="0.7"/>
+  <ellipse cx="400" cy="400" rx="160" ry="280" stroke="#009854" stroke-width="0.7"/>
+  <ellipse cx="400" cy="400" rx="240" ry="280" stroke="#009854" stroke-width="0.7"/>
+  <!-- Tilted meridians -->
+  <ellipse cx="400" cy="400" rx="200" ry="280" stroke="#009854" stroke-width="0.5" transform="rotate(30 400 400)"/>
+  <ellipse cx="400" cy="400" rx="200" ry="280" stroke="#009854" stroke-width="0.5" transform="rotate(-30 400 400)"/>
+  <!-- Money flow lines (arcs from city to city) -->
+  <!-- Middle East to Europe -->
+  <path d="M520 340 Q450 200 320 280" stroke="#009854" stroke-width="1.2" stroke-dasharray="4 4" fill="none"/>
+  <circle cx="520" cy="340" r="4" fill="#009854"/>
+  <circle cx="320" cy="280" r="4" fill="#009854"/>
+  <!-- North America to Middle East -->
+  <path d="M180 320 Q300 180 500 300" stroke="#009854" stroke-width="1.2" stroke-dasharray="4 4" fill="none"/>
+  <circle cx="180" cy="320" r="4" fill="#009854"/>
+  <circle cx="500" cy="300" r="4" fill="#009854"/>
+  <!-- Europe to Africa -->
+  <path d="M350 260 Q380 350 420 480" stroke="#009854" stroke-width="1.2" stroke-dasharray="4 4" fill="none"/>
+  <circle cx="350" cy="260" r="4" fill="#009854"/>
+  <circle cx="420" cy="480" r="4" fill="#009854"/>
+  <!-- Asia to Middle East -->
+  <path d="M620 360 Q560 300 500 340" stroke="#009854" stroke-width="1.2" stroke-dasharray="4 4" fill="none"/>
+  <circle cx="620" cy="360" r="4" fill="#009854"/>
+  <!-- South America to Europe -->
+  <path d="M250 520 Q300 380 360 280" stroke="#009854" stroke-width="1" stroke-dasharray="4 4" fill="none"/>
+  <circle cx="250" cy="520" r="3" fill="#009854"/>
+  <!-- Australia to Asia -->
+  <path d="M620 520 Q600 440 580 380" stroke="#009854" stroke-width="1" stroke-dasharray="4 4" fill="none"/>
+  <circle cx="620" cy="520" r="3" fill="#009854"/>
+  <!-- Africa to North America -->
+  <path d="M440 460 Q340 400 200 340" stroke="#009854" stroke-width="1" stroke-dasharray="4 4" fill="none"/>
+  <!-- Small dots for cities -->
+  <circle cx="400" cy="340" r="5" fill="#009854" opacity="0.8"/>
+  <circle cx="340" cy="360" r="3" fill="#009854" opacity="0.6"/>
+  <circle cx="460" cy="380" r="3" fill="#009854" opacity="0.6"/>
+  <circle cx="300" cy="420" r="2.5" fill="#009854" opacity="0.5"/>
+  <circle cx="500" cy="440" r="2.5" fill="#009854" opacity="0.5"/>
+  <circle cx="380" cy="300" r="2.5" fill="#009854" opacity="0.5"/>
+  <circle cx="450" cy="320" r="2" fill="#009854" opacity="0.4"/>
+  <circle cx="350" cy="450" r="2" fill="#009854" opacity="0.4"/>
+  <circle cx="550" cy="400" r="2" fill="#009854" opacity="0.4"/>
+  <circle cx="280" cy="350" r="2" fill="#009854" opacity="0.4"/>
+</svg>

@@ -33,8 +33,11 @@ export default function WelcomePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm space-y-8 text-center">
+    <div className="relative flex min-h-screen flex-col items-center justify-center px-6 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
+        <img src="/globe-bg.svg" alt="" className="h-[600px] w-[600px] max-w-none select-none" />
+      </div>
+      <div className="relative z-10 w-full max-w-sm space-y-8 text-center">
         <div className="space-y-2">
           <img src="/brand/logo-green.svg" alt="Yasmin" className="mx-auto h-16" />
           <h1 className="text-3xl font-bold text-gray-900">{t("title")}</h1>

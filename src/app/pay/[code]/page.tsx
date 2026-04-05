@@ -497,12 +497,7 @@ function CheckoutContent() {
         ) : (
           <div />
         )}
-        <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-yasmin">
-            <span className="text-xs font-bold text-white">Y</span>
-          </div>
-          <span className="text-sm font-semibold text-gray-700">Yasmin</span>
-        </div>
+        <img src="/brand/logo-green.svg" alt="Yasmin" className="h-6" />
         <LanguageSelector />
       </div>
 

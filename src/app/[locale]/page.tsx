@@ -36,9 +36,7 @@ export default function WelcomePage() {
     <div className="flex min-h-screen flex-col items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-8 text-center">
         <div className="space-y-2">
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-yasmin">
-            <span className="text-3xl font-bold text-white">Y</span>
-          </div>
+          <img src="/brand/logo-green.svg" alt="Yasmin" className="mx-auto h-16" />
           <h1 className="text-3xl font-bold text-gray-900">{t("title")}</h1>
           <p className="text-gray-500">{t("subtitle")}</p>
         </div>

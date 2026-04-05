@@ -46,10 +46,7 @@ export default function ProtectedLayout({
       {/* Top nav */}
       <header className="sticky top-0 z-30 border-b border-gray-100 bg-white/80 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="Yasmin" className="h-6 w-6" />
-            <span className="text-lg font-bold text-yasmin-dark">Yasmin</span>
-          </div>
+          <img src="/brand/logo-green.svg" alt="Yasmin" className="h-7" />
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-500">
               @{user?.username}

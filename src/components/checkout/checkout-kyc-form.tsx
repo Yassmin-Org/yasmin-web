@@ -86,6 +86,7 @@ export function CheckoutKycForm({
   const [dropdownOptions, setDropdownOptions] = useState<
     Record<string, Array<{ key: string; label: string }>>
   >({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -186,27 +187,14 @@ export function CheckoutKycForm({
   const handleSubmit = async () => {
     if (!currentFlow) return;
     setSubmitting(true);
+    setFieldErrors({});
 
     try {
-      const prefix = provider === "bridge" ? "bridge" : "walapay";
-
-      // Submit form data for this step
-      try {
-        await axios.post(`${API_URL}/${prefix}/kyc`, formValues, { headers });
-      } catch (submitErr) {
-        const msg = axios.isAxiosError(submitErr)
-          ? submitErr.response?.data?.message || submitErr.message
-          : "Failed to submit data";
-        onError(msg);
-        setSubmitting(false);
-        return;
-      }
-
-      // Merge with all submitted data
+      // Merge current form values with all previously submitted data
       const merged = { ...allSubmittedData, ...formValues };
       setAllSubmittedData(merged);
 
-      // Get next step
+      // Get next step via navigation
       const navRes = await axios.post(
         `${API_URL}/kyc/navigation`,
         { currentFlow, ...merged },
@@ -216,20 +204,76 @@ export function CheckoutKycForm({
       const nextFlow = navData?.nextFlow;
 
       if (nextFlow) {
+        // More steps to fill — don't submit to provider yet
         setCurrentFlow(nextFlow);
         setStepNumber((s) => s + 1);
         await loadFormStep(nextFlow);
       } else {
-        // All steps complete
+        // All steps complete — NOW submit everything to the provider
+        const prefix = provider === "bridge" ? "bridge" : "walapay";
+        try {
+          await axios.post(`${API_URL}/${prefix}/kyc`, merged, { headers });
+        } catch (submitErr) {
+          if (axios.isAxiosError(submitErr)) {
+            const errMsg = submitErr.response?.data?.message || submitErr.message;
+            // Parse field-level errors from backend message
+            const errors = parseFieldErrors(errMsg);
+            if (Object.keys(errors).length > 0) {
+              setFieldErrors(errors);
+              onError("Please fix the highlighted fields and try again.");
+            } else {
+              onError(errMsg);
+            }
+          } else {
+            onError("Failed to submit verification data");
+          }
+          setSubmitting(false);
+          return;
+        }
         onComplete();
       }
     } catch (err) {
       const msg = axios.isAxiosError(err)
         ? err.response?.data?.message || err.message
-        : "Failed to submit verification data";
+        : "Failed to process verification";
       onError(msg);
     }
     setSubmitting(false);
+  };
+
+  // Parse backend error messages into field-level errors
+  const parseFieldErrors = (message: string): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    // Backend sends concatenated validation messages
+    const parts = message.split(/(?=[a-zA-Z]+\.)|(?=Phone number)|(?=address\.)|(?=government)/);
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      if (trimmed.includes("Phone number") || trimmed.includes("phoneNumber")) {
+        errors.phoneNumber = trimmed;
+      } else if (trimmed.includes("address.streetLine1") || trimmed.includes("addressLine1")) {
+        errors.addressLine1 = "Street address is required (4-100 characters)";
+      } else if (trimmed.includes("address.city")) {
+        errors.addressCity = "City is required";
+      } else if (trimmed.includes("address.stateRegion") || trimmed.includes("addressState")) {
+        errors.addressState = "State/Region is required";
+      } else if (trimmed.includes("address.postalCode") || trimmed.includes("addressZipCode")) {
+        errors.addressZipCode = "Postal code is required";
+      } else if (trimmed.includes("address.countryCode")) {
+        errors.country = "Country is required";
+      } else if (trimmed.includes("governmentIssuedIdentification.type") || trimmed.includes("governmentIdType")) {
+        errors.governmentIdType = "ID type is required";
+      } else if (trimmed.includes("governmentIssuedIdentification.number") || trimmed.includes("governmentIdNumber")) {
+        errors.governmentIdNumber = "ID number is required";
+      } else if (trimmed.includes("governmentIssuedIdentification.countryCode") || trimmed.includes("governmentIdCountryCode")) {
+        errors.governmentIdCountryCode = "ID country is required";
+      } else if (trimmed.includes("frontImage") || trimmed.includes("governmentIdFrontImage")) {
+        errors.governmentIdFrontImage = "Front image of ID is required";
+      } else if (trimmed.includes("E.164")) {
+        errors.phoneNumber = "Phone must be in international format (e.g. +1234567890)";
+      }
+    }
+    return errors;
   };
 
   // Initialize
@@ -283,9 +327,10 @@ export function CheckoutKycForm({
             key={field.key}
             field={field}
             value={formValues[field.key]}
-            onChange={(val) => setValue(field.key, val)}
+            onChange={(val) => { setValue(field.key, val); setFieldErrors((prev) => { const n = { ...prev }; delete n[field.key]; return n; }); }}
             dropdownOptions={dropdownOptions[field.key]}
             allValues={formValues}
+            error={fieldErrors[field.key]}
           />
         ))}
       </div>
@@ -309,12 +354,14 @@ function DynamicField({
   onChange,
   dropdownOptions,
   allValues,
+  error,
 }: {
   field: FieldInfo;
   value: unknown;
   onChange: (val: unknown) => void;
   dropdownOptions?: Array<{ key: string; label: string }>;
   allValues: Record<string, unknown>;
+  error?: string;
 }) {
   // Check conditional visibility — hide field if condition not met
   for (const validation of field.validations) {
@@ -338,6 +385,7 @@ function DynamicField({
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
           hint={field.infoText}
+          error={error}
         />
       );
 

@@ -5,7 +5,6 @@ import { transactionsApi } from "./slices/transactions";
 import { activityApi } from "./slices/activity";
 import { starsApi } from "./slices/stars";
 import { kycApi } from "./slices/kyc";
-import { walapayApi } from "./slices/walapay";
 import { bridgeApi } from "./slices/bridge";
 import websocketReducer from "./slices/websocket";
 
@@ -16,7 +15,6 @@ export const store = configureStore({
     [activityApi.reducerPath]: activityApi.reducer,
     [starsApi.reducerPath]: starsApi.reducer,
     [kycApi.reducerPath]: kycApi.reducer,
-    [walapayApi.reducerPath]: walapayApi.reducer,
     [bridgeApi.reducerPath]: bridgeApi.reducer,
     websocket: websocketReducer,
   },
@@ -27,7 +25,6 @@ export const store = configureStore({
       activityApi.middleware,
       starsApi.middleware,
       kycApi.middleware,
-      walapayApi.middleware,
       bridgeApi.middleware
     ),
 });

@@ -80,7 +80,7 @@ function CheckoutContent() {
   const [otpCode, setOtpCode] = useState("");
 
   // KYC state
-  const [provider, setProvider] = useState<"walapay" | "bridge" | null>(null);
+  const [provider, setProvider] = useState<"bridge">("bridge");
   const [kycApproved, setKycApproved] = useState(false);
   const [authToken, setAuthToken] = useState("");
 
@@ -140,7 +140,7 @@ function CheckoutContent() {
             if (state.step === "kyc-waiting") {
               setEmail(state.email || "");
               setSelectedCountry(state.country || "");
-              setProvider(state.provider || null);
+              setProvider("bridge");
               // Will auto-check KYC status after auth
             }
           }
@@ -247,32 +247,23 @@ function CheckoutContent() {
         const statusRes = await axios.get(`${API_URL}/accounts/status`, { headers });
         const statusData = statusRes.data?.data || statusRes.data;
         const kycStatus = statusData?.status?.toUpperCase();
-        const prov = statusData?.provider || "walapay";
-        setProvider(prov);
+        setProvider("bridge");
 
         if (kycStatus === "APPROVED" || kycStatus === "ACTIVE") {
           setKycApproved(true);
           setStep("fiat-deposit");
-        } else if (prov === "bridge") {
-          setStep("fiat-kyc-bridge");
         } else {
-          setStep("fiat-kyc-form");
+          setStep("fiat-kyc-bridge");
         }
       } catch {
         // No account status yet — need to start KYC
         // Determine provider via navigation
         try {
-          const navRes = await axios.post(`${API_URL}/kyc/navigation`, {}, { headers });
-          const navData = navRes.data?.data || navRes.data;
-          setProvider(navData?.provider || "walapay");
-          if (navData?.provider === "bridge") {
-            setStep("fiat-kyc-bridge");
-          } else {
-            setStep("fiat-kyc-form");
-          }
+          setProvider("bridge");
+          setStep("fiat-kyc-bridge");
         } catch {
-          setStep("fiat-kyc-form");
-          setProvider("walapay");
+          setStep("fiat-kyc-bridge");
+          setProvider("bridge");
         }
       }
     } catch (err) {
@@ -556,10 +547,10 @@ function CheckoutContent() {
           </div>
         )}
 
-        {/* FIAT: KYC FORM (Walapay dynamic form) */}
+        {/* FIAT: KYC FORM (Bridge dynamic form) */}
         {step === "fiat-kyc-form" && authToken && (
           <CheckoutKycForm
-            provider={provider || "walapay"}
+            provider="bridge"
             token={authToken}
             prefillCountry={legalResidence || selectedCountry}
             prefillEmail={email}
@@ -582,7 +573,7 @@ function CheckoutContent() {
         {step === "fiat-kyc-waiting" && authToken && linkData && (
           <CheckoutKycWaiting
             token={authToken}
-            provider={provider || "walapay"}
+            provider="bridge"
             paymentCode={linkData.code}
             amount={linkData.amount}
             merchantUsername={linkData.receiverUsername}
@@ -596,7 +587,7 @@ function CheckoutContent() {
         {step === "fiat-deposit" && authToken && linkData && (
           <CheckoutDeposit
             token={authToken}
-            provider={provider || "walapay"}
+            provider="bridge"
             amount={linkData.amount}
             country={selectedCountry}
             merchantWallet={linkData.receiverWalletAddress}

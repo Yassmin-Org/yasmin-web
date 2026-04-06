@@ -13,7 +13,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface CheckoutDepositProps {
   token: string;
-  provider: "walapay" | "bridge";
+  provider: "bridge";
   amount: number;
   country: string;
   merchantWallet: string;
@@ -48,7 +48,7 @@ export function CheckoutDeposit({
   const [copied, setCopied] = useState<string | null>(null);
 
   const headers = { Authorization: `Bearer ${token}` };
-  const prefix = provider === "bridge" ? "bridge" : "walapay";
+  const prefix = "bridge";
 
   // Load currencies for country
   const loadCurrencies = useCallback(async () => {

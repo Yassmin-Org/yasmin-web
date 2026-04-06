@@ -11,7 +11,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface CheckoutKycWaitingProps {
   token: string;
-  provider: "walapay" | "bridge";
+  provider: "bridge";
   paymentCode: string;
   amount: number;
   merchantUsername: string;

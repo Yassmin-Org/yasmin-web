@@ -6,7 +6,7 @@ export const kycApi = createApi({
   baseQuery: apiBaseQuery(),
   tagTypes: ["KYC"],
   endpoints: (builder) => ({
-    // Get KYC status (determines provider: walapay or bridge)
+    // Get KYC status (Bridge provider)
     getAccountStatus: builder.query<unknown, void>({
       query: () => ({
         url: "/accounts/status",
@@ -50,7 +50,7 @@ export const kycApi = createApi({
       invalidatesTags: ["KYC"],
     }),
 
-    // Get KYC submission details (Walapay)
+    // Get KYC submission details
     getKYCSubmissionDetails: builder.query<unknown, void>({
       query: () => ({
         url: "/accounts/kyc-submission-details",

@@ -17,9 +17,8 @@ export interface User {
   balance: number;
   usdcBalance: number;
   points: number;
-  walapayAccountId?: string;
   bridgeCustId?: string;
-  provider: "bridge" | "walapay" | null;
+  provider: "bridge" | null;
   createdAt: string;
   updatedAt: string;
 }

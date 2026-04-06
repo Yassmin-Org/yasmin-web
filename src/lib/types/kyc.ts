@@ -7,7 +7,7 @@ export interface GetKYCResponse {
       developerReason: string;
       reason: string;
     }>;
-    provider: "walapay" | "bridge";
+    provider: "bridge";
     isYasminVerified: boolean;
     isBridgeVerified: boolean;
   };

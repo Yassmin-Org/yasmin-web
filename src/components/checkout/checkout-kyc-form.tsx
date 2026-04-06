@@ -63,7 +63,7 @@ interface FormResponse {
 }
 
 interface CheckoutKycFormProps {
-  provider: "walapay" | "bridge";
+  provider: "bridge";
   token: string;
   prefillCountry?: string;
   prefillEmail?: string;
@@ -124,7 +124,7 @@ export function CheckoutKycForm({
   const loadFormStep = async (flowKey: string) => {
     setLoading(true);
     try {
-      const prefix = provider === "bridge" ? "bridge" : "walapay";
+      const prefix = "bridge";
       const res = await axios.get(`${API_URL}/${prefix}/kyc/${flowKey}`, {
         headers,
       });
@@ -171,7 +171,7 @@ export function CheckoutKycForm({
   // Load dropdown options from endpoint
   const loadDropdownOptions = async (fieldKey: string, endpoint: string) => {
     try {
-      // Fix endpoint path — backend returns paths like "/api/walapay/countries"
+      // Fix endpoint path — backend returns paths like "/api/bridge/countries"
       // but API_URL already includes "/api", so strip it
       let path = endpoint;
       if (path.startsWith("/api/")) {
@@ -249,7 +249,7 @@ export function CheckoutKycForm({
         await loadFormStep(nextFlow);
       } else {
         // All steps complete — NOW submit everything to the provider
-        const prefix = provider === "bridge" ? "bridge" : "walapay";
+        const prefix = "bridge";
 
         // Fix phone number format — ensure E.164
         const submitData = { ...merged };

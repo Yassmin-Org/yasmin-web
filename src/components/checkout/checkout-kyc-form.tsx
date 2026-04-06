@@ -131,11 +131,14 @@ export function CheckoutKycForm({
       const data = res.data?.data || res.data;
       setFormData(data);
 
-      // Pre-populate form values from existing data
+      // Pre-populate form values: previously entered data > API defaults
       const values: Record<string, unknown> = {};
       const allFields = getAllFields(data);
       for (const field of allFields) {
-        if (field.value !== undefined) {
+        // First check if user already entered this value (going back)
+        if (allSubmittedData[field.key] !== undefined) {
+          values[field.key] = allSubmittedData[field.key];
+        } else if (field.value !== undefined) {
           values[field.key] = field.value;
         }
       }
@@ -247,8 +250,22 @@ export function CheckoutKycForm({
       } else {
         // All steps complete — NOW submit everything to the provider
         const prefix = provider === "bridge" ? "bridge" : "walapay";
+
+        // Fix phone number format — ensure E.164
+        const submitData = { ...merged };
+        if (typeof submitData.phoneNumber === "string" && submitData.phoneNumber) {
+          let phone = submitData.phoneNumber.replace(/[^0-9+]/g, "");
+          if (!phone.startsWith("+")) phone = "+" + phone;
+          submitData.phoneNumber = phone;
+        }
+        if (typeof submitData.phone === "string" && submitData.phone) {
+          let phone = submitData.phone.replace(/[^0-9+]/g, "");
+          if (!phone.startsWith("+")) phone = "+" + phone;
+          submitData.phone = phone;
+        }
+
         try {
-          await axios.post(`${API_URL}/${prefix}/kyc`, merged, { headers });
+          await axios.post(`${API_URL}/${prefix}/kyc`, submitData, { headers });
         } catch (submitErr) {
           if (axios.isAxiosError(submitErr)) {
             const errData = submitErr.response?.data;
@@ -471,14 +488,20 @@ function DynamicField({
       return (
         <Input
           label={field.label}
-          placeholder={field.placeholder}
+          placeholder={field.placeholder || "+971501234567"}
           type="tel"
-          inputMode="numeric"
+          inputMode="tel"
           value={(value as string) || ""}
-          onChange={(e) =>
-            onChange(e.target.value.replace(/[^0-9+]/g, ""))
-          }
-          hint={field.infoText}
+          onChange={(e) => {
+            let val = e.target.value.replace(/[^0-9+]/g, "");
+            // Auto-add + prefix if user types digits only
+            if (val && !val.startsWith("+") && val.length > 5) {
+              val = "+" + val;
+            }
+            onChange(val);
+          }}
+          hint={field.infoText || "International format: +971501234567"}
+          error={error}
         />
       );
 

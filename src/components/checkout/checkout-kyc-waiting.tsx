@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckoutProgress } from "./checkout-progress";
-import { Clock, Check, RefreshCw } from "lucide-react";
+import { Clock, Check, RefreshCw, XCircle, AlertTriangle } from "lucide-react";
 import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -30,48 +30,50 @@ export function CheckoutKycWaiting({
   onError,
   onGoBack,
 }: CheckoutKycWaitingProps) {
-  const [polling, setPolling] = useState(true);
-  const [elapsed, setElapsed] = useState(0);
-  const [status, setStatus] = useState<string>("checking");
+  const [kycStatus, setKycStatus] = useState<string>("checking");
+  const [rejectionReasons, setRejectionReasons] = useState<string[]>([]);
+  const [lastChecked, setLastChecked] = useState<string>("");
+  const [checking, setChecking] = useState(false);
 
-  const POLL_INTERVAL = 10; // seconds
-  const MAX_POLL_TIME = 300; // 5 minutes
+  const POLL_INTERVAL = 15; // seconds
 
   const headers = { Authorization: `Bearer ${token}` };
 
   const checkStatus = useCallback(async () => {
+    setChecking(true);
     try {
       const res = await axios.get(`${API_URL}/accounts/status`, { headers });
       const data = res.data?.data || res.data;
+      const status = (data?.status || "").toUpperCase();
 
-      const currentStatus = data?.status?.toUpperCase();
+      setLastChecked(new Date().toLocaleTimeString());
 
-      if (
-        currentStatus === "APPROVED" ||
-        currentStatus === "ACTIVE"
-      ) {
-        setStatus("approved");
-        setPolling(false);
+      if (status === "APPROVED" || status === "ACTIVE") {
+        setKycStatus("approved");
         onApproved();
-        return true;
-      } else if (currentStatus === "REJECTED") {
-        setStatus("rejected");
-        setPolling(false);
-        onError(
-          "Verification was rejected. Please contact support."
+        return;
+      } else if (status === "REJECTED") {
+        setKycStatus("rejected");
+        const issues = data?.submissionIssues || data?.rejection_reasons || [];
+        setRejectionReasons(
+          issues.map((i: { message?: string; reason?: string; developer_reason?: string }) =>
+            i.message || i.reason || i.developer_reason || "Unknown reason"
+          )
         );
-        return true;
+        return;
+      } else if (status === "SUBMITTED" || status === "UNDER_REVIEW") {
+        setKycStatus("reviewing");
+      } else {
+        setKycStatus(status.toLowerCase() || "checking");
       }
-
-      setStatus("reviewing");
-      return false;
     } catch {
-      return false;
+      // Keep current status on error
     }
+    setChecking(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // Save state immediately so return visits work even if user closes browser early
+  // Save state for return visits
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(
@@ -86,131 +88,120 @@ export function CheckoutKycWaiting({
     }
   }, [paymentCode, provider]);
 
-  // Polling loop
+  // Poll every 15 seconds
   useEffect(() => {
-    if (!polling) return;
-
-    const interval = setInterval(async () => {
-      setElapsed((prev) => {
-        const next = prev + POLL_INTERVAL;
-        if (next >= MAX_POLL_TIME) {
-          setPolling(false);
-          setStatus("timeout");
-          return next;
-        }
-        return next;
-      });
-
-      await checkStatus();
-    }, POLL_INTERVAL * 1000);
-
-    // Initial check
     checkStatus();
-
+    const interval = setInterval(checkStatus, POLL_INTERVAL * 1000);
     return () => clearInterval(interval);
-  }, [polling, checkStatus, paymentCode, provider]);
+  }, [checkStatus]);
 
-  const handleManualCheck = async () => {
-    setStatus("checking");
-    const done = await checkStatus();
-    if (!done) setStatus("reviewing");
-  };
-
-  if (status === "approved") {
-    return (
-      <div className="space-y-4 text-center">
-        <CheckoutProgress currentStep={4} totalSteps={5} />
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yasmin/15">
-          <Check className="h-7 w-7 text-yasmin" />
-        </div>
-        <h2 className="text-lg font-semibold text-gray-900">
-          Verification Approved!
-        </h2>
-        <p className="text-sm text-gray-500">
-          Proceeding to payment...
-        </p>
-      </div>
-    );
-  }
-
-  if (status === "timeout") {
-    return (
-      <div className="space-y-4 text-center">
-        <CheckoutProgress currentStep={3} totalSteps={5} />
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yellow-100">
-          <Clock className="h-7 w-7 text-yellow-600" />
-        </div>
-        <h2 className="text-lg font-semibold text-gray-900">
-          Verification In Progress
-        </h2>
-        <p className="text-sm text-gray-500">
-          Your verification is being reviewed. This can take a few minutes to a
-          few hours.
-        </p>
-
-        <Card className="bg-gray-50 p-4 text-left">
-          <p className="text-sm font-medium text-gray-700">
-            Come back to this link to complete your payment:
-          </p>
-          <p className="mt-1 break-all text-xs font-mono text-yasmin">
-            {typeof window !== "undefined" ? window.location.href : ""}
-          </p>
-        </Card>
-
-        <p className="text-xs text-gray-400">
-          We&apos;ll send an email to notify you when your verification is
-          approved.
-        </p>
-
-        <Button variant="outline" className="w-full" onClick={handleManualCheck}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Check Status Now
-        </Button>
-      </div>
-    );
-  }
-
-  // Polling / reviewing state
   return (
     <div className="space-y-4 text-center">
       <CheckoutProgress currentStep={3} totalSteps={5} />
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-yellow-100">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-yellow-600 border-t-transparent" />
-      </div>
-      <h2 className="text-lg font-semibold text-gray-900">
-        Verifying Your Identity
-      </h2>
-      <p className="text-sm text-gray-500">
-        Your documents have been submitted and are under review. This can take a few minutes to a few hours.
-      </p>
-      <div className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
-        Status: <span className="font-semibold">{status === "reviewing" ? "Under Review" : "Checking..."}</span>
-      </div>
 
-      <div className="rounded-lg bg-gray-50 p-3">
-        <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>Checking every {POLL_INTERVAL}s</span>
-          <span>
-            {Math.floor(elapsed / 60)}:
-            {(elapsed % 60).toString().padStart(2, "0")} /{" "}
-            {Math.floor(MAX_POLL_TIME / 60)}:00
-          </span>
+      {/* STATUS DISPLAY */}
+      <Card className="space-y-3 p-5">
+        {/* Icon */}
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full" style={{
+          backgroundColor: kycStatus === "approved" ? "rgb(0 152 84 / 0.15)" :
+            kycStatus === "rejected" ? "rgb(239 68 68 / 0.15)" : "rgb(234 179 8 / 0.15)"
+        }}>
+          {kycStatus === "approved" ? (
+            <Check className="h-7 w-7 text-yasmin" />
+          ) : kycStatus === "rejected" ? (
+            <XCircle className="h-7 w-7 text-red-500" />
+          ) : (
+            <Clock className="h-7 w-7 text-yellow-600" />
+          )}
         </div>
-        <div className="mt-2 h-1.5 rounded-full bg-gray-200">
-          <div
-            className="h-1.5 rounded-full bg-yasmin transition-all"
-            style={{
-              width: `${Math.min((elapsed / MAX_POLL_TIME) * 100, 100)}%`,
-            }}
-          />
-        </div>
-      </div>
 
-      {onGoBack && (
-        <Button variant="outline" className="w-full" onClick={onGoBack}>
-          Go back and fix data
-        </Button>
+        {/* Title */}
+        <h2 className="text-lg font-semibold text-gray-900">
+          {kycStatus === "approved" ? "Verification Approved!" :
+            kycStatus === "rejected" ? "Verification Rejected" :
+            "Verification In Progress"}
+        </h2>
+
+        {/* Status badge */}
+        <div className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+          kycStatus === "approved" ? "bg-yasmin/15 text-yasmin-dark" :
+          kycStatus === "rejected" ? "bg-red-100 text-red-700" :
+          "bg-yellow-100 text-yellow-700"
+        }`}>
+          {kycStatus === "approved" ? "APPROVED" :
+            kycStatus === "rejected" ? "REJECTED" :
+            kycStatus === "reviewing" ? "UNDER REVIEW" :
+            kycStatus.toUpperCase()}
+        </div>
+
+        {/* Description */}
+        <p className="text-sm text-gray-500">
+          {kycStatus === "approved"
+            ? "Your identity has been verified. Proceeding to payment..."
+            : kycStatus === "rejected"
+            ? "Your verification was not approved. See details below."
+            : "Your documents are being reviewed. This page auto-refreshes every 15 seconds."}
+        </p>
+
+        {/* Last checked */}
+        {lastChecked && (
+          <p className="text-[10px] text-gray-400">
+            Last checked: {lastChecked}
+            {checking && " (checking...)"}
+          </p>
+        )}
+      </Card>
+
+      {/* REJECTION REASONS */}
+      {kycStatus === "rejected" && rejectionReasons.length > 0 && (
+        <div className="space-y-2 text-left">
+          <p className="text-sm font-medium text-gray-700">Rejection reasons:</p>
+          {rejectionReasons.map((reason, i) => (
+            <div key={i} className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+              {reason}
+            </div>
+          ))}
+        </div>
       )}
+
+      {/* ACTIONS */}
+      <div className="space-y-2">
+        {/* Manual refresh */}
+        {kycStatus !== "approved" && (
+          <Button
+            variant="outline"
+            className="w-full"
+            loading={checking}
+            onClick={checkStatus}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Check Status Now
+          </Button>
+        )}
+
+        {/* Go back to fix (for rejected or reviewing) */}
+        {kycStatus !== "approved" && onGoBack && (
+          <Button
+            variant="ghost"
+            className="w-full"
+            onClick={onGoBack}
+          >
+            {kycStatus === "rejected" ? "Go back and resubmit" : "Go back and fix data"}
+          </Button>
+        )}
+
+        {/* Copy link for later */}
+        {kycStatus === "reviewing" && (
+          <div className="rounded-lg bg-gray-50 p-3 text-left">
+            <p className="text-xs font-medium text-gray-600">
+              Bookmark this link to come back later:
+            </p>
+            <p className="mt-1 break-all text-[10px] font-mono text-yasmin">
+              {typeof window !== "undefined" ? window.location.href : ""}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -249,7 +249,8 @@ export function CheckoutKycForm({
           await axios.post(`${API_URL}/${prefix}/kyc`, merged, { headers });
         } catch (submitErr) {
           if (axios.isAxiosError(submitErr)) {
-            const errMsg = submitErr.response?.data?.message || submitErr.message;
+            const errData = submitErr.response?.data;
+            const errMsg = errData?.message || submitErr.message;
             // Parse field-level errors from backend message
             const errors = parseFieldErrors(errMsg);
             if (Object.keys(errors).length > 0) {
@@ -288,10 +289,13 @@ export function CheckoutKycForm({
   };
 
   // Parse backend error messages into field-level errors
-  const parseFieldErrors = (message: string): Record<string, string> => {
+  const parseFieldErrors = (message: unknown): Record<string, string> => {
     const errors: Record<string, string> = {};
+    // Ensure message is a string
+    const msg = typeof message === "string" ? message : Array.isArray(message) ? message.join(". ") : String(message || "");
+    if (!msg) return errors;
     // Backend sends concatenated validation messages
-    const parts = message.split(/(?=[a-zA-Z]+\.)|(?=Phone number)|(?=address\.)|(?=government)/);
+    const parts = msg.split(/(?=[a-zA-Z]+\.)|(?=Phone number)|(?=address\.)|(?=government)/);
     for (const part of parts) {
       const trimmed = part.trim();
       if (!trimmed) continue;

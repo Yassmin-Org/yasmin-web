@@ -181,8 +181,11 @@ export function CheckoutKycWaiting({
         Verifying Your Identity
       </h2>
       <p className="text-sm text-gray-500">
-        This usually takes a few minutes. Please wait...
+        Your documents have been submitted and are under review. This can take a few minutes to a few hours.
       </p>
+      <div className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+        Status: <span className="font-semibold">{status === "reviewing" ? "Under Review" : "Checking..."}</span>
+      </div>
 
       <div className="rounded-lg bg-gray-50 p-3">
         <div className="flex items-center justify-between text-xs text-gray-500">

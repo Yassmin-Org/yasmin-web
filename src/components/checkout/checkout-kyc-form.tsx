@@ -80,6 +80,7 @@ export function CheckoutKycForm({
   onError,
 }: CheckoutKycFormProps) {
   const [currentFlow, setCurrentFlow] = useState<string | null>(null);
+  const [stepHistory, setStepHistory] = useState<string[]>([]);
   const [formData, setFormData] = useState<FormResponse | null>(null);
   const [formValues, setFormValues] = useState<Record<string, unknown>>({});
   const [allSubmittedData, setAllSubmittedData] = useState<Record<string, unknown>>({});
@@ -239,6 +240,7 @@ export function CheckoutKycForm({
 
       if (nextFlow) {
         // More steps to fill — don't submit to provider yet
+        if (currentFlow) setStepHistory((prev) => [...prev, currentFlow]);
         setCurrentFlow(nextFlow);
         setStepNumber((s) => s + 1);
         await loadFormStep(nextFlow);
@@ -250,17 +252,20 @@ export function CheckoutKycForm({
         } catch (submitErr) {
           if (axios.isAxiosError(submitErr)) {
             const errData = submitErr.response?.data;
-            const errMsg = errData?.message || submitErr.message;
-            // Parse field-level errors from backend message
-            const errors = parseFieldErrors(errMsg);
-            if (Object.keys(errors).length > 0) {
-              setFieldErrors(errors);
-              onError("Please fix the highlighted fields and try again.");
+            // Get the raw error — could be string, array, or object
+            let errMsg = "";
+            if (typeof errData?.message === "string") {
+              errMsg = errData.message;
+            } else if (Array.isArray(errData?.message)) {
+              errMsg = errData.message.join("\n");
+            } else if (errData?.message) {
+              errMsg = JSON.stringify(errData.message);
             } else {
-              onError(errMsg);
+              errMsg = submitErr.message;
             }
+            onError(errMsg);
           } else {
-            onError("Failed to submit verification data");
+            onError(String(submitErr));
           }
           setSubmitting(false);
           return;
@@ -336,6 +341,17 @@ export function CheckoutKycForm({
     setFormValues((prev) => ({ ...prev, [key]: value }));
   };
 
+  // Go back to previous step (keeps all data)
+  const handleBack = async () => {
+    if (stepHistory.length === 0) return;
+    const prevFlow = stepHistory[stepHistory.length - 1];
+    setStepHistory((prev) => prev.slice(0, -1));
+    setCurrentFlow(prevFlow);
+    setStepNumber((s) => Math.max(0, s - 1));
+    setFieldErrors({});
+    await loadFormStep(prevFlow);
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -385,14 +401,26 @@ export function CheckoutKycForm({
         ))}
       </div>
 
-      <Button
-        size="lg"
-        className="w-full"
-        loading={submitting}
-        onClick={handleSubmit}
-      >
-        Continue
-      </Button>
+      <div className="flex gap-3">
+        {stepHistory.length > 0 && (
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex-shrink-0"
+            onClick={handleBack}
+          >
+            Back
+          </Button>
+        )}
+        <Button
+          size="lg"
+          className="w-full"
+          loading={submitting}
+          onClick={handleSubmit}
+        >
+          Continue
+        </Button>
+      </div>
     </div>
   );
 }

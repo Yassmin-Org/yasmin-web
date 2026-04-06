@@ -296,6 +296,7 @@ function CheckoutContent() {
   };
 
   const handleKycFormComplete = () => {
+    setError(null); // Clear any previous errors
     setStep("fiat-kyc-waiting");
   };
 
@@ -587,6 +588,7 @@ function CheckoutContent() {
             merchantUsername={linkData.receiverUsername}
             onApproved={handleKycApproved}
             onError={(msg) => setError(msg)}
+            onGoBack={() => { setError(null); setStep("fiat-kyc-form"); }}
           />
         )}
 

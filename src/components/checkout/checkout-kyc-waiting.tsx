@@ -17,6 +17,7 @@ interface CheckoutKycWaitingProps {
   merchantUsername: string;
   onApproved: () => void;
   onError: (msg: string) => void;
+  onGoBack?: () => void;
 }
 
 export function CheckoutKycWaiting({
@@ -27,6 +28,7 @@ export function CheckoutKycWaiting({
   merchantUsername,
   onApproved,
   onError,
+  onGoBack,
 }: CheckoutKycWaitingProps) {
   const [polling, setPolling] = useState(true);
   const [elapsed, setElapsed] = useState(0);
@@ -200,6 +202,12 @@ export function CheckoutKycWaiting({
           />
         </div>
       </div>
+
+      {onGoBack && (
+        <Button variant="outline" className="w-full" onClick={onGoBack}>
+          Go back and fix data
+        </Button>
+      )}
     </div>
   );
 }

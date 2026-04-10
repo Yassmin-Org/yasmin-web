@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-yasmin: #009854;
-  --color-yasmin-dark: #002e2b;
-  --color-yasmin-light: #00e581;
+  --color-yasmin: #980000;
+  --color-yasmin-dark: #2e0000;
+  --color-yasmin-light: #e50000;
 }
 
 :root {

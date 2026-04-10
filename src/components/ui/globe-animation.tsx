@@ -51,64 +51,64 @@ export function GlobeAnimation() {
 
         {/* Rotating globe grid */}
         <g className="globe-grid">
-          <circle cx="350" cy="350" r="250" stroke="#009854" strokeWidth="0.8" />
-          <ellipse cx="350" cy="350" rx="250" ry="70" stroke="#009854" strokeWidth="0.4" />
-          <ellipse cx="350" cy="350" rx="250" ry="140" stroke="#009854" strokeWidth="0.4" />
-          <ellipse cx="350" cy="350" rx="250" ry="210" stroke="#009854" strokeWidth="0.4" />
-          <ellipse cx="350" cy="350" rx="70" ry="250" stroke="#009854" strokeWidth="0.4" />
-          <ellipse cx="350" cy="350" rx="140" ry="250" stroke="#009854" strokeWidth="0.4" />
-          <ellipse cx="350" cy="350" rx="210" ry="250" stroke="#009854" strokeWidth="0.4" />
-          <ellipse cx="350" cy="350" rx="180" ry="250" stroke="#009854" strokeWidth="0.3" transform="rotate(25 350 350)" />
-          <ellipse cx="350" cy="350" rx="180" ry="250" stroke="#009854" strokeWidth="0.3" transform="rotate(-25 350 350)" />
-          <ellipse cx="350" cy="350" rx="120" ry="250" stroke="#009854" strokeWidth="0.3" transform="rotate(50 350 350)" />
-          <ellipse cx="350" cy="350" rx="120" ry="250" stroke="#009854" strokeWidth="0.3" transform="rotate(-50 350 350)" />
+          <circle cx="350" cy="350" r="250" stroke="#980000" strokeWidth="0.8" />
+          <ellipse cx="350" cy="350" rx="250" ry="70" stroke="#980000" strokeWidth="0.4" />
+          <ellipse cx="350" cy="350" rx="250" ry="140" stroke="#980000" strokeWidth="0.4" />
+          <ellipse cx="350" cy="350" rx="250" ry="210" stroke="#980000" strokeWidth="0.4" />
+          <ellipse cx="350" cy="350" rx="70" ry="250" stroke="#980000" strokeWidth="0.4" />
+          <ellipse cx="350" cy="350" rx="140" ry="250" stroke="#980000" strokeWidth="0.4" />
+          <ellipse cx="350" cy="350" rx="210" ry="250" stroke="#980000" strokeWidth="0.4" />
+          <ellipse cx="350" cy="350" rx="180" ry="250" stroke="#980000" strokeWidth="0.3" transform="rotate(25 350 350)" />
+          <ellipse cx="350" cy="350" rx="180" ry="250" stroke="#980000" strokeWidth="0.3" transform="rotate(-25 350 350)" />
+          <ellipse cx="350" cy="350" rx="120" ry="250" stroke="#980000" strokeWidth="0.3" transform="rotate(50 350 350)" />
+          <ellipse cx="350" cy="350" rx="120" ry="250" stroke="#980000" strokeWidth="0.3" transform="rotate(-50 350 350)" />
         </g>
 
         {/* Transfer arcs */}
-        <path className="arc-glow" d="M180 280 Q280 150 420 230" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" />
-        <path className="arc-glow" d="M520 300 Q400 180 250 310" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "1s" }} />
-        <path className="arc-glow" d="M300 450 Q350 300 480 250" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "2s" }} />
-        <path className="arc-glow" d="M450 420 Q380 350 280 280" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "3s" }} />
-        <path className="arc-glow" d="M200 350 Q320 250 500 340" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "1.5s" }} />
-        <path className="arc-glow" d="M380 200 Q300 320 350 460" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "2.5s" }} />
-        <path className="arc-glow" d="M550 380 Q450 280 300 320" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "0.5s" }} />
-        <path className="arc-glow" d="M250 400 Q350 300 500 280" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "3.5s" }} />
-        <path className="arc-glow" d="M320 200 Q420 300 460 450" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "4s" }} />
-        <path className="arc-glow" d="M480 350 Q380 250 220 340" stroke="#009854" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "4.5s" }} />
+        <path className="arc-glow" d="M180 280 Q280 150 420 230" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" />
+        <path className="arc-glow" d="M520 300 Q400 180 250 310" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "1s" }} />
+        <path className="arc-glow" d="M300 450 Q350 300 480 250" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "2s" }} />
+        <path className="arc-glow" d="M450 420 Q380 350 280 280" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "3s" }} />
+        <path className="arc-glow" d="M200 350 Q320 250 500 340" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "1.5s" }} />
+        <path className="arc-glow" d="M380 200 Q300 320 350 460" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "2.5s" }} />
+        <path className="arc-glow" d="M550 380 Q450 280 300 320" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "0.5s" }} />
+        <path className="arc-glow" d="M250 400 Q350 300 500 280" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "3.5s" }} />
+        <path className="arc-glow" d="M320 200 Q420 300 460 450" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "4s" }} />
+        <path className="arc-glow" d="M480 350 Q380 250 220 340" stroke="#980000" strokeWidth="0.8" strokeDasharray="4 6" fill="none" style={{ animationDelay: "4.5s" }} />
 
         {/* Traveling dots */}
-        <circle className="dot-t1" r="3" fill="#00e581" />
-        <circle className="dot-t2" r="3" fill="#00e581" />
-        <circle className="dot-t3" r="2.5" fill="#009854" />
-        <circle className="dot-t4" r="2.5" fill="#009854" />
-        <circle className="dot-t5" r="3" fill="#00e581" />
-        <circle className="dot-t6" r="2.5" fill="#009854" />
-        <circle className="dot-t7" r="3" fill="#00e581" />
-        <circle className="dot-t8" r="2.5" fill="#009854" />
-        <circle className="dot-t9" r="3" fill="#00e581" />
-        <circle className="dot-t10" r="2.5" fill="#009854" />
+        <circle className="dot-t1" r="3" fill="#e50000" />
+        <circle className="dot-t2" r="3" fill="#e50000" />
+        <circle className="dot-t3" r="2.5" fill="#980000" />
+        <circle className="dot-t4" r="2.5" fill="#980000" />
+        <circle className="dot-t5" r="3" fill="#e50000" />
+        <circle className="dot-t6" r="2.5" fill="#980000" />
+        <circle className="dot-t7" r="3" fill="#e50000" />
+        <circle className="dot-t8" r="2.5" fill="#980000" />
+        <circle className="dot-t9" r="3" fill="#e50000" />
+        <circle className="dot-t10" r="2.5" fill="#980000" />
 
         {/* City dots */}
-        <circle className="city" cx="180" cy="280" r="3" fill="#009854" style={{ animationDelay: "0s" }} />
-        <circle className="city" cx="420" cy="230" r="3" fill="#009854" style={{ animationDelay: "0.5s" }} />
-        <circle className="city" cx="520" cy="300" r="3" fill="#009854" style={{ animationDelay: "1s" }} />
-        <circle className="city" cx="250" cy="310" r="3" fill="#009854" style={{ animationDelay: "1.5s" }} />
-        <circle className="city" cx="300" cy="450" r="2.5" fill="#009854" style={{ animationDelay: "2s" }} />
-        <circle className="city" cx="480" cy="250" r="2.5" fill="#009854" style={{ animationDelay: "0.3s" }} />
-        <circle className="city" cx="450" cy="420" r="2.5" fill="#009854" style={{ animationDelay: "0.8s" }} />
-        <circle className="city" cx="280" cy="280" r="2.5" fill="#009854" style={{ animationDelay: "1.3s" }} />
-        <circle className="city" cx="500" cy="340" r="2.5" fill="#009854" style={{ animationDelay: "1.8s" }} />
-        <circle className="city" cx="200" cy="350" r="2.5" fill="#009854" style={{ animationDelay: "2.3s" }} />
-        <circle className="city" cx="380" cy="200" r="2.5" fill="#009854" style={{ animationDelay: "0.7s" }} />
-        <circle className="city" cx="350" cy="460" r="2.5" fill="#009854" style={{ animationDelay: "1.2s" }} />
-        <circle className="city" cx="550" cy="380" r="2.5" fill="#009854" style={{ animationDelay: "1.7s" }} />
-        <circle className="city" cx="300" cy="320" r="2" fill="#009854" style={{ animationDelay: "2.2s" }} />
-        <circle className="city" cx="500" cy="280" r="2" fill="#009854" style={{ animationDelay: "0.4s" }} />
-        <circle className="city" cx="250" cy="400" r="2" fill="#009854" style={{ animationDelay: "0.9s" }} />
-        <circle className="city" cx="460" cy="450" r="2" fill="#009854" style={{ animationDelay: "1.4s" }} />
-        <circle className="city" cx="220" cy="340" r="2" fill="#009854" style={{ animationDelay: "1.9s" }} />
-        <circle className="city" cx="320" cy="200" r="2" fill="#009854" style={{ animationDelay: "2.4s" }} />
-        <circle className="city" cx="480" cy="350" r="2" fill="#009854" style={{ animationDelay: "2.8s" }} />
+        <circle className="city" cx="180" cy="280" r="3" fill="#980000" style={{ animationDelay: "0s" }} />
+        <circle className="city" cx="420" cy="230" r="3" fill="#980000" style={{ animationDelay: "0.5s" }} />
+        <circle className="city" cx="520" cy="300" r="3" fill="#980000" style={{ animationDelay: "1s" }} />
+        <circle className="city" cx="250" cy="310" r="3" fill="#980000" style={{ animationDelay: "1.5s" }} />
+        <circle className="city" cx="300" cy="450" r="2.5" fill="#980000" style={{ animationDelay: "2s" }} />
+        <circle className="city" cx="480" cy="250" r="2.5" fill="#980000" style={{ animationDelay: "0.3s" }} />
+        <circle className="city" cx="450" cy="420" r="2.5" fill="#980000" style={{ animationDelay: "0.8s" }} />
+        <circle className="city" cx="280" cy="280" r="2.5" fill="#980000" style={{ animationDelay: "1.3s" }} />
+        <circle className="city" cx="500" cy="340" r="2.5" fill="#980000" style={{ animationDelay: "1.8s" }} />
+        <circle className="city" cx="200" cy="350" r="2.5" fill="#980000" style={{ animationDelay: "2.3s" }} />
+        <circle className="city" cx="380" cy="200" r="2.5" fill="#980000" style={{ animationDelay: "0.7s" }} />
+        <circle className="city" cx="350" cy="460" r="2.5" fill="#980000" style={{ animationDelay: "1.2s" }} />
+        <circle className="city" cx="550" cy="380" r="2.5" fill="#980000" style={{ animationDelay: "1.7s" }} />
+        <circle className="city" cx="300" cy="320" r="2" fill="#980000" style={{ animationDelay: "2.2s" }} />
+        <circle className="city" cx="500" cy="280" r="2" fill="#980000" style={{ animationDelay: "0.4s" }} />
+        <circle className="city" cx="250" cy="400" r="2" fill="#980000" style={{ animationDelay: "0.9s" }} />
+        <circle className="city" cx="460" cy="450" r="2" fill="#980000" style={{ animationDelay: "1.4s" }} />
+        <circle className="city" cx="220" cy="340" r="2" fill="#980000" style={{ animationDelay: "1.9s" }} />
+        <circle className="city" cx="320" cy="200" r="2" fill="#980000" style={{ animationDelay: "2.4s" }} />
+        <circle className="city" cx="480" cy="350" r="2" fill="#980000" style={{ animationDelay: "2.8s" }} />
       </svg>
     </div>
   );
